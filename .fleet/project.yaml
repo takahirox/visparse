@@ -15,10 +15,7 @@ evaluators:
     provider_id: process.harness
     command_ref: compile
     criterion_ids: [sources-compile]
-rules:
-  - "Implement GitHub Issue #1 as a focused, provider-independent structured analysis layer."
-  - "Keep evidence, measurements, observations, interpretations, confidence, and provenance distinct."
-  - "Prefer a small dependency-free v0.1 that is useful to downstream AI agents and fully tested."
+rules: []
 paths:
   writable:
     - "src/**"
