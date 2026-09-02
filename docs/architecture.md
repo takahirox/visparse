@@ -5,7 +5,7 @@ Visparse 0.1 has four deliberately small layers.
 1. `model.py` defines the schema contract, including file-backed `SourceEvidence`, bounded JSON and source reads, reference checks, canonical serialization, and structural summaries.
 2. `analyzer.py` defines the provider-neutral `Analyzer` boundary and `run_analyzer`; `codex.py` supplies the first concrete adapter and a mockable `ProcessRunner`.
 3. `evaluation.py` runs inspectable JSON cases with exact validity and summary expectations, plus analyzer cases that can run offline with a fake process runner.
-4. `cli.py` constructs file-backed source evidence, selects an explicitly requested analyzer, passes its result through `run_analyzer`, and writes canonical JSON for scripts.
+4. `cli.py` constructs file-backed source evidence; the `analyze` command currently selects `CodexAnalyzer` and emits adapter output as canonical JSON for scripts after its `run_analyzer` validation.
 
 Providers remain outside the schema:
 
