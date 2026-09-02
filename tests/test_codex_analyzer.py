@@ -83,7 +83,8 @@ class CodexAnalyzerTests(unittest.TestCase):
         argv, timeout, path = runner.calls[0]
         self.assertEqual(argv[:9], ["codex", "exec", "--ephemeral", "--sandbox", "read-only", "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules", "--image"])
         self.assertEqual(argv[9], str(path))
-        prompt = argv[10]
+        self.assertEqual(argv[10], "--")
+        prompt = argv[11]
         self.assertIn("exactly one JSON object", prompt)
         self.assertIn('id="source-1"', prompt)
         self.assertIn('kind="screenshot"', prompt)

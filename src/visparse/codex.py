@@ -133,6 +133,7 @@ class CodexAnalyzer(Analyzer):
             "--ignore-rules",
             "--image",
             image_path,
+            "--",
             prompt,
         ]
 
