@@ -67,7 +67,7 @@ worker:
   adaptive_routing: true
   local_backend: false
 budgets:
-  wall_seconds: 3600.0
+  wall_seconds: 1800.0
   worker_turns: 16
   processes: 60
   download_bytes: 0
