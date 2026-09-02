@@ -1,6 +1,6 @@
 # Visparse
 
-Visparse 0.1 is a small, dependency-free Python library for recording visual analysis without blurring evidence and inference. It validates schema-versioned JSON, emits canonical JSON, exposes a provider-neutral analyzer boundary, and includes deterministic evaluation tools.
+Visparse 0.1 is a small, dependency-free Python library for recording visual and interactive-experience analysis without blurring evidence and inference. It validates schema-versioned JSON, emits canonical JSON, exposes provider-neutral boundaries, and includes deterministic evaluation tools.
 
 A record keeps these layers distinct:
 
@@ -27,7 +27,7 @@ The second command intentionally fails because an evaluation fixture is not itse
 PYTHONPATH=src python -m visparse evaluate examples/evaluation_fixture.json
 ```
 
-The CLI commands are `analyze`, `analyze-design`, `validate`, `normalize`, `summarize`, and `evaluate`. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
+The CLI commands include `analyze`, `analyze-design`, `inspect`, `inspect-summary`, `inspect-capabilities`, `validate`, `normalize`, `summarize`, and `evaluate`. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
 
 ## Analyze an image end to end
 
@@ -74,6 +74,22 @@ The profile vocabulary covers layout, visual hierarchy, spacing and density, typ
 The public API exposes `DesignAnalyzer`, `run_design_analyzer`, `CodexDesignAnalyzer`, `validate_design_profile`, `normalize_design_profile`, and `summarize_design_profile`. This permits future API-backed or local VLM adapters to reuse the same output contract.
 
 Screenshot input is intentionally sufficient for this first design-analysis milestone. Multiple viewports can reveal visual consistency and responsive tendencies, but cannot establish hidden states, exact breakpoints, semantic DOM structure, computed CSS, or accessibility metadata. Those signals may be added later as optional evidence rather than prerequisites.
+
+## Inspect supplied web and interactive evidence
+
+External agents and collectors can submit bounded JSON captures for DOM, computed CSS, accessibility, runtime, screenshots, video, canvas, WebGL, and high-level Three.js state. Visparse validates grounding and keeps exact measurements, runtime observations, visual observations, and interpretations in separate arrays.
+
+```sh
+PYTHONPATH=src python -m visparse inspect capture-bundle.json
+PYTHONPATH=src python -m visparse inspect-summary capture-bundle.json
+PYTHONPATH=src python -m visparse inspect-capabilities
+```
+
+These commands consume already collected evidence. They do not fetch a URL, launch or automate a browser, execute page code, or pretend that unavailable signals were observed. The public `inspect_snapshot` and `inspection_capabilities` functions form a deterministic, model-independent boundary suitable for a later MCP wrapper.
+
+Three.js support is progressive: generic canvas and WebGL evidence remains useful, explicit runtime metadata can report Three.js as detected, and a supplied `threejs` capture can carry high-level scene, camera, light, material, and object inventories. Detection never fabricates a scene graph.
+
+See `docs/inspection.md` for the bundle contract, grounding rules, and tool-wrapping guidance.
 
 ## Development
 

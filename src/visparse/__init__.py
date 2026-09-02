@@ -16,6 +16,16 @@ from .design import (
     summarize_design_profile,
     validate_design_profile,
 )
+from .inspection import (
+    CAPTURE_KINDS,
+    INSPECTION_SCHEMA_VERSION,
+    inspect_snapshot,
+    inspection_capabilities,
+    load_inspection,
+    normalize_inspection,
+    summarize_inspection,
+    validate_inspection,
+)
 from .model import (
     MAX_INPUT_BYTES,
     SCHEMA_VERSION,
@@ -27,12 +37,15 @@ from .model import (
 )
 
 __all__ = [
-    "AVOID_COPYING", "Analyzer", "CodexDesignAnalyzer", "DESIGN_CATEGORIES",
+    "AVOID_COPYING", "Analyzer", "CAPTURE_KINDS", "CodexDesignAnalyzer", "DESIGN_CATEGORIES",
     "DESIGN_SCHEMA_VERSION", "DesignAnalyzer", "EvaluationResult",
-    "INTERPRETIVE_DESIGN_CATEGORIES", "OBSERVATION_DESIGN_CATEGORIES",
+    "INSPECTION_SCHEMA_VERSION", "INTERPRETIVE_DESIGN_CATEGORIES",
+    "OBSERVATION_DESIGN_CATEGORIES",
     "MAX_INPUT_BYTES", "SCHEMA_VERSION", "SourceEvidence", "ValidationError",
-    "evaluate_fixture", "load_design_profile", "load_fixture", "load_record",
-    "normalize_design_profile", "normalize_record", "run_analyzer",
-    "run_design_analyzer", "summarize_design_profile", "summarize_record",
-    "validate_design_profile", "validate_record",
+    "evaluate_fixture", "inspect_snapshot", "inspection_capabilities",
+    "load_design_profile", "load_fixture", "load_inspection", "load_record",
+    "normalize_design_profile", "normalize_inspection", "normalize_record",
+    "run_analyzer", "run_design_analyzer", "summarize_design_profile",
+    "summarize_inspection", "summarize_record", "validate_design_profile",
+    "validate_inspection", "validate_record",
 ]

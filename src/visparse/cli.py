@@ -11,6 +11,12 @@ from typing import Sequence
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
 from .design import CodexDesignAnalyzer, normalize_design_profile
+from .inspection import (
+    inspection_capabilities,
+    load_inspection,
+    normalize_inspection,
+    summarize_inspection,
+)
 from .model import MAX_INPUT_BYTES, SourceEvidence, ValidationError, load_record, normalize_record, summarize_record
 
 
@@ -35,6 +41,10 @@ def _parser() -> argparse.ArgumentParser:
     for name in ("validate", "normalize", "summarize", "evaluate"):
         command = subparsers.add_parser(name)
         command.add_argument("path", help="JSON path, or - for standard input")
+    for name in ("inspect", "inspect-summary"):
+        command = subparsers.add_parser(name)
+        command.add_argument("path", help="inspection bundle path, or - for standard input")
+    subparsers.add_parser("inspect-capabilities")
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
     analyze_design = subparsers.add_parser("analyze-design")
@@ -70,7 +80,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             profile = CodexDesignAnalyzer().analyze(references, targets)
             sys.stdout.write(normalize_design_profile(profile))
             return 0
+        if args.command == "inspect-capabilities":
+            sys.stdout.write(_json_line(inspection_capabilities()))
+            return 0
         payload = _read_bounded(args.path)
+        if args.command in {"inspect", "inspect-summary"}:
+            inspection = load_inspection(payload)
+            if args.command == "inspect":
+                sys.stdout.write(normalize_inspection(inspection))
+            else:
+                sys.stdout.write(_json_line(summarize_inspection(inspection)))
+            return 0
         if args.command == "evaluate":
             result = evaluate_fixture(load_fixture(payload))
             sys.stdout.write(_json_line(result.to_dict()))

@@ -1,12 +1,13 @@
 # Architecture and scope
 
-Visparse 0.1 has five deliberately small layers.
+Visparse 0.1 has six deliberately small layers.
 
 1. `model.py` defines the schema contract, including file-backed `SourceEvidence`, bounded JSON and source reads, reference checks, canonical serialization, and structural summaries.
 2. `analyzer.py` defines the provider-neutral `Analyzer` boundary and `run_analyzer`; `codex.py` supplies the first concrete adapter and a mockable `ProcessRunner`.
 3. `evaluation.py` runs inspectable JSON cases with exact validity and summary expectations, plus analyzer cases that can run offline with a fake process runner.
 4. `cli.py` constructs file-backed source evidence; the `analyze` command currently selects `CodexAnalyzer` and emits adapter output as canonical JSON for scripts after its `run_analyzer` validation.
 5. `design.py` defines a higher-level, provider-neutral design-profile contract, its `DesignAnalyzer` boundary, strict source-role validation, and the first `CodexDesignAnalyzer`. The `analyze-design` command accepts one or more reference screenshots plus optional target screenshots.
+6. `inspection.py` validates capture bundles supplied by external collectors and exposes deterministic public, summary, capability, and CLI interfaces without owning browser automation or model reasoning.
 
 Providers remain outside the schema:
 
@@ -50,6 +51,29 @@ Codex output is never trusted merely because the process succeeded. `validate_re
 
 The design path follows the same rule. `validate_design_profile` rejects malformed categories and references; `run_design_analyzer` additionally requires the exact supplied reference/target identities and roles. A high-confidence design-tone judgment remains an interpretation, while only mechanically established scalar values belong in measurements.
 
+The supplied-inspection trust flow is:
+
+```text
+external authorized collector -> bounded untrusted capture bundle -> validate_inspection -> canonical evidence
+```
+
+Visparse validates shape, identifiers, references, layer compatibility, and provenance. It does not attest that collection occurred or that a claim is true. Original artifacts and collector-specific authorization remain outside this boundary.
+
+## Agent-driven supplied inspection
+
+`inspection.py` accepts generic DOM, CSS, accessibility, runtime, screenshot, video, canvas, WebGL, and Three.js capture payloads as opaque JSON. The payload vocabulary stays collector-neutral while stable capture kinds and locators let a host agent decide which evidence to request next.
+
+The inspection schema separates claims structurally:
+
+```text
+capture -> exact numeric measurement (mechanical method)
+capture -> runtime observation
+capture -> visual observation
+measurement or observation -> interpretation -> confidence
+```
+
+`inspect_snapshot` is the tool-facing validation entry point, and `inspection_capabilities` describes the contract without selecting a model. Three.js evidence is progressive: an explicit high-level capture takes precedence, conventional runtime/WebGL metadata can report detection, and no marker yields `not_available` rather than a claim that Three.js is absent. Visparse never synthesizes a scene graph from generic WebGL data.
+
 ## Screenshot-first design analysis
 
 The initial design workflow deliberately requires no DOM, computed style, accessibility tree, or browser automation. A VLM can use screenshots to test the product value of hierarchy, composition, spacing feel, typography hierarchy, color relationships, component appearance, density, rhythm, and tone. Multiple viewport screenshots add evidence about consistency and responsive tendencies.
@@ -73,7 +97,7 @@ Evaluation keeps deterministic schema cases and exercises the Codex adapter offl
 
 ## Non-goals
 
-The core does not decode images, perform computer vision, fetch URLs, drive browsers, or embed provider behavior. The optional first adapter invokes Codex, but Codex itself—not the core—interprets image bytes.
+The core does not decode images, perform computer vision, fetch URLs, drive browsers, collect page state, or embed provider behavior. The optional first adapter invokes Codex, but Codex itself—not the core—interprets image bytes.
 
 Codex uses existing local authentication, so Visparse imposes no mandatory API billing. Version 0.1 ships no additional API or local providers; the provider-neutral boundary only keeps those future adapters from forcing schema changes.
 
