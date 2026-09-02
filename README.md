@@ -27,7 +27,32 @@ The second command intentionally fails because an evaluation fixture is not itse
 PYTHONPATH=src python -m visparse evaluate examples/evaluation_fixture.json
 ```
 
-Other commands are `normalize` and `summarize`; each accepts a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
+The CLI commands are `analyze`, `validate`, `normalize`, `summarize`, and `evaluate`. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
+
+## Analyze an image end to end
+
+Image analysis uses an installed and authenticated local Codex CLI with its saved ChatGPT/Codex login. This adapter does not require an OpenAI API key.
+
+```sh
+PYTHONPATH=src python -m visparse analyze screenshot.png > analysis.json
+PYTHONPATH=src python -m visparse validate analysis.json
+PYTHONPATH=src python -m visparse summarize analysis.json
+```
+
+Use a common image input such as PNG or JPEG. Input reading is bounded by `MAX_INPUT_BYTES`, and an oversized file is rejected before analysis; support for every image format is not claimed.
+
+Successful commands write canonical JSON only to standard output. Diagnostics and errors go to standard error, and failures return a nonzero status. Analyzer errors are not hidden or repaired, and model accuracy is not guaranteed.
+
+For an optional manual live test, check the local CLI and authenticate if needed:
+
+```sh
+codex --version
+codex login
+```
+
+Run `codex login` only when authentication is needed, then run the three-command workflow above.
+
+Automated tests mock the runner and require neither a live Codex session nor network access.
 
 ## Development
 
