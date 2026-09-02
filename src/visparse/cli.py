@@ -9,7 +9,8 @@ from pathlib import Path
 from typing import Sequence
 
 from .evaluation import evaluate_fixture, load_fixture
-from .model import MAX_INPUT_BYTES, ValidationError, load_record, normalize_record, summarize_record
+from .codex import CodexAnalyzer, CodexAnalyzerError
+from .model import MAX_INPUT_BYTES, SourceEvidence, ValidationError, load_record, normalize_record, summarize_record
 
 
 def _read_bounded(path: str) -> bytes:
@@ -33,6 +34,8 @@ def _parser() -> argparse.ArgumentParser:
     for name in ("validate", "normalize", "summarize", "evaluate"):
         command = subparsers.add_parser(name)
         command.add_argument("path", help="JSON path, or - for standard input")
+    analyze = subparsers.add_parser("analyze")
+    analyze.add_argument("image", metavar="IMAGE", help="image path")
     return parser
 
 
@@ -40,6 +43,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "analyze":
+            source = SourceEvidence.from_file("source-1", args.image)
+            record = CodexAnalyzer().analyze(source)
+            sys.stdout.write(normalize_record(record))
+            return 0
         payload = _read_bounded(args.path)
         if args.command == "evaluate":
             result = evaluate_fixture(load_fixture(payload))
@@ -53,6 +61,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             sys.stdout.write(_json_line(summarize_record(record)))
         return 0
-    except (OSError, ValidationError, TypeError, ValueError) as error:
+    except (OSError, ValidationError, TypeError, ValueError, CodexAnalyzerError) as error:
         sys.stderr.write(f"visparse: {error}\n")
         return 2
