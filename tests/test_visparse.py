@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import sys
 import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -98,6 +100,50 @@ class ModelTests(unittest.TestCase):
     def test_input_limit(self) -> None:
         with self.assertRaisesRegex(ValidationError, "exceeds"):
             load_record(b" " * (MAX_INPUT_BYTES + 1))
+
+    def test_source_evidence_from_file_hashes_and_infers_kind(self) -> None:
+        payload = b"image bytes"
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "capture.PNG"
+            path.write_bytes(payload)
+            evidence = SourceEvidence.from_file("src-file", path)
+        digest = hashlib.sha256(payload).hexdigest()
+        self.assertEqual(evidence.id, "src-file")
+        self.assertEqual(evidence.kind, "screenshot")
+        self.assertEqual(evidence.locator, f"file:sha256:{digest}")
+        self.assertEqual(evidence.payload, payload)
+        self.assertEqual(digest, digest.lower())
+        self.assertNotIn(path.name, evidence.locator)
+        self.assertNotIn(str(path.parent), evidence.locator)
+
+    def test_source_evidence_from_file_kind_override_and_fallback(self) -> None:
+        with TemporaryDirectory() as directory:
+            image_path = Path(directory) / "capture.png"
+            other_path = Path(directory) / "capture.data"
+            image_path.write_bytes(b"png")
+            other_path.write_bytes(b"data")
+            overridden = SourceEvidence.from_file(
+                "src-override", image_path, source_kind="image",
+            )
+            fallback = SourceEvidence.from_file("src-fallback", other_path)
+        self.assertEqual(overridden.kind, "image")
+        self.assertEqual(fallback.kind, "image")
+
+    def test_source_evidence_from_file_rejects_invalid_paths_and_oversize(self) -> None:
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            missing = root / "missing.png"
+            with self.assertRaisesRegex(ValidationError, "regular file"):
+                SourceEvidence.from_file("src-missing", missing)
+            with self.assertRaisesRegex(ValidationError, "regular file"):
+                SourceEvidence.from_file("src-directory", root)
+            exact = root / "exact.bin"
+            exact.write_bytes(b"x" * MAX_INPUT_BYTES)
+            self.assertEqual(len(SourceEvidence.from_file("src-exact", exact).payload), MAX_INPUT_BYTES)
+            oversized = root / "oversized.bin"
+            oversized.write_bytes(b"x" * (MAX_INPUT_BYTES + 1))
+            with self.assertRaisesRegex(ValidationError, "exceeds"):
+                SourceEvidence.from_file("src-oversized", oversized)
 
 
 class EchoAnalyzer(Analyzer):

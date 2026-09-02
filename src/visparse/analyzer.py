@@ -3,28 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Any
 
-from .model import MAX_INPUT_BYTES, ValidationError, validate_record
-
-
-@dataclass(frozen=True)
-class SourceEvidence:
-    """Opaque source material supplied to an analyzer implementation."""
-
-    id: str
-    kind: str
-    locator: str
-    payload: bytes
-
-    def __post_init__(self) -> None:
-        if not self.id or not self.kind or not self.locator:
-            raise ValidationError("source evidence fields must be non-empty")
-        if not isinstance(self.payload, bytes):
-            raise TypeError("source evidence payload must be bytes")
-        if len(self.payload) > MAX_INPUT_BYTES:
-            raise ValidationError(f"source evidence exceeds {MAX_INPUT_BYTES} bytes")
+from .model import SourceEvidence, ValidationError, validate_record
 
 
 class Analyzer(ABC):

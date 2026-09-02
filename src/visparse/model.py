@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 from collections.abc import Mapping
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = "0.1"
@@ -13,9 +16,53 @@ MAX_ITEMS = 10_000
 MAX_DEPTH = 24
 MAX_STRING_LENGTH = 100_000
 
+_COMMON_IMAGE_SUFFIXES = frozenset({
+    ".avif", ".bmp", ".gif", ".heic", ".heif", ".ico", ".jpeg", ".jpg",
+    ".png", ".svg", ".tif", ".tiff", ".webp",
+})
+
 
 class ValidationError(ValueError):
     """A stable, user-facing record validation error."""
+
+
+@dataclass(frozen=True)
+class SourceEvidence:
+    """Opaque source material supplied to an analyzer implementation."""
+
+    id: str
+    kind: str
+    locator: str
+    payload: bytes
+
+    def __post_init__(self) -> None:
+        if not self.id or not self.kind or not self.locator:
+            raise ValidationError("source evidence fields must be non-empty")
+        if not isinstance(self.payload, bytes):
+            raise TypeError("source evidence payload must be bytes")
+        if len(self.payload) > MAX_INPUT_BYTES:
+            raise ValidationError(f"source evidence exceeds {MAX_INPUT_BYTES} bytes")
+
+    @classmethod
+    def from_file(
+        cls, source_id: str, path: str | Path, *, source_kind: str | None = None,
+    ) -> SourceEvidence:
+        """Create evidence from a bounded regular-file read."""
+        kind = (
+            "screenshot" if Path(path).suffix.lower() in _COMMON_IMAGE_SUFFIXES else "image"
+        ) if source_kind is None else _text(source_kind, "source_kind")
+        source_path = Path(path)
+        if not source_path.is_file():
+            raise ValidationError("source path is not a regular file")
+        try:
+            with source_path.open("rb") as stream:
+                payload = stream.read(MAX_INPUT_BYTES + 1)
+        except OSError:
+            raise ValidationError("source path is not a readable regular file") from None
+        if len(payload) > MAX_INPUT_BYTES:
+            raise ValidationError(f"source evidence exceeds {MAX_INPUT_BYTES} bytes")
+        digest = hashlib.sha256(payload).hexdigest()
+        return cls(source_id, kind, f"file:sha256:{digest}", payload)
 
 
 def _fail(path: str, message: str) -> None:
