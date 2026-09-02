@@ -10,6 +10,7 @@ from typing import Sequence
 
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
+from .design import CodexDesignAnalyzer, normalize_design_profile
 from .model import MAX_INPUT_BYTES, SourceEvidence, ValidationError, load_record, normalize_record, summarize_record
 
 
@@ -36,6 +37,15 @@ def _parser() -> argparse.ArgumentParser:
         command.add_argument("path", help="JSON path, or - for standard input")
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
+    analyze_design = subparsers.add_parser("analyze-design")
+    analyze_design.add_argument(
+        "images", metavar="REFERENCE_IMAGE", nargs="+",
+        help="one or more reference-site screenshot paths",
+    )
+    analyze_design.add_argument(
+        "--target", metavar="TARGET_IMAGE", action="append", default=[],
+        help="target-site screenshot path; repeat for multiple viewports",
+    )
     return parser
 
 
@@ -47,6 +57,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             source = SourceEvidence.from_file("source-1", args.image)
             record = CodexAnalyzer().analyze(source)
             sys.stdout.write(normalize_record(record))
+            return 0
+        if args.command == "analyze-design":
+            references = [
+                SourceEvidence.from_file(f"reference-{index}", path)
+                for index, path in enumerate(args.images, 1)
+            ]
+            targets = [
+                SourceEvidence.from_file(f"target-{index}", path)
+                for index, path in enumerate(args.target, 1)
+            ]
+            profile = CodexDesignAnalyzer().analyze(references, targets)
+            sys.stdout.write(normalize_design_profile(profile))
             return 0
         payload = _read_bounded(args.path)
         if args.command == "evaluate":
