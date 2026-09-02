@@ -1,0 +1,65 @@
+{
+  "cases": [
+    {
+      "expected_summary": {
+        "counts": {
+          "confidence": 0,
+          "interactions": 1,
+          "interpretations": 0,
+          "measurements": 1,
+          "observations": 0,
+          "sources": 1
+        },
+        "interaction_kinds": ["web"],
+        "schema_version": "0.1",
+        "source_kinds": ["screenshot"]
+      },
+      "expected_valid": true,
+      "name": "small-valid-record",
+      "record": {
+        "confidence": [],
+        "interactions": [
+          {
+            "details": {"action": "capture", "url": "https://example.invalid"},
+            "id": "interaction-1",
+            "kind": "web",
+            "source_id": "source-1"
+          }
+        ],
+        "interpretations": [],
+        "measurements": [
+          {
+            "id": "measurement-1",
+            "method": "decoded pixel dimensions",
+            "name": "width",
+            "source_id": "source-1",
+            "unit": "px",
+            "value": 320
+          }
+        ],
+        "observations": [],
+        "provenance": {"created_by": "fixture", "inputs": ["source-1"]},
+        "schema_version": "0.1",
+        "sources": [
+          {"id": "source-1", "kind": "screenshot", "locator": "fixture://image-1"}
+        ]
+      }
+    },
+    {
+      "expected_valid": false,
+      "name": "broken-reference",
+      "record": {
+        "confidence": [],
+        "interactions": [],
+        "interpretations": [],
+        "measurements": [],
+        "observations": [
+          {"id": "observation-1", "source_ids": ["missing"], "statement": "Unbacked claim."}
+        ],
+        "provenance": {"created_by": "fixture", "inputs": []},
+        "schema_version": "0.1",
+        "sources": []
+      }
+    }
+  ]
+}
