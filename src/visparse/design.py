@@ -33,6 +33,8 @@ DESIGN_CATEGORIES = frozenset({
     "color_usage", "component_styling", "ui_patterns", "section_rhythm",
     "navigation", "imagery_media", "design_tone", "strength", "weakness",
 })
+INTERPRETIVE_DESIGN_CATEGORIES = frozenset({"design_tone", "strength", "weakness"})
+OBSERVATION_DESIGN_CATEGORIES = DESIGN_CATEGORIES - INTERPRETIVE_DESIGN_CATEGORIES
 AVOID_COPYING = frozenset({"assets", "branding", "content", "implementation"})
 _UNSAFE_RECOMMENDATION = re.compile(
     r"\bclone\b|\b(?:copy|duplicate|replicate|reproduce|lift|reuse)\b"
@@ -198,6 +200,11 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
         _exact(observation, path, {"id", "source_ids", "category", "statement"})
         used_sources.update(_references(observation["source_ids"], f"{path}.source_ids", source_ids, nonempty=True))
         _category(observation["category"], f"{path}.category")
+        if observation["category"] in INTERPRETIVE_DESIGN_CATEGORIES:
+            _fail(
+                f"{path}.category",
+                "design_tone, strength, and weakness are interpretations, not direct observations",
+            )
         _text(observation["statement"], f"{path}.statement")
 
     for index, item in enumerate(confidence):
@@ -381,7 +388,12 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             suffix = f": {detail[:500]}" if detail else ""
             raise CodexProcessError(f"codex model/process failed with exit status {result.returncode}{suffix}")
         try:
-            return run_design_analyzer(_StaticDesignAnalyzer(_json_object(result.stdout)), references, targets)
+            profile = run_design_analyzer(_StaticDesignAnalyzer(_json_object(result.stdout)), references, targets)
+            if profile["measurements"]:
+                raise ValidationError(
+                    "Codex design analysis has no trusted mechanical measurement channel; measurements must be empty"
+                )
+            return profile
         except (ValidationError, TypeError) as error:
             raise CodexValidationError(f"codex returned invalid design profile: {error}") from None
 
@@ -403,20 +415,24 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             }
             for index, item in enumerate(list(references) + list(targets))
         ]
+        source_ids = [item["id"] for item in identities]
         return (
             "Analyze the attached screenshots as one Visparse design profile. Return exactly one JSON object and no Markdown. "
             f"schema_version must be {DESIGN_SCHEMA_VERSION!r}; sources must exactly equal {json.dumps(identities, ensure_ascii=False)}. "
             "Top-level keys must be schema_version, sources, measurements, observations, interpretations, confidence, principles, recommendations, provenance. "
             f"Observation and interpretation category must be one of {json.dumps(sorted(DESIGN_CATEGORIES))}. "
             "Cover layout, hierarchy, spacing and density, typography, color roles, component styling, UI patterns, section rhythm, navigation, imagery, tone, strengths, and weaknesses when visible. "
-            "measurements contain only mechanically established finite numeric facts with id, source_id, name, value, optional unit, and method. "
-            "observations contain id, source_ids, category, statement and only directly visible facts. "
+            "measurements must be an empty array because this VLM-only adapter has no trusted mechanical measurement channel; do not estimate image dimensions or other numeric facts. "
+            f"observations contain id, source_ids, category, statement and only directly visible facts; observation category must be one of {json.dumps(sorted(OBSERVATION_DESIGN_CATEGORIES))}. "
             "interpretations contain id, observation_ids, category, statement, confidence_id. confidence contains id, level 0..1, uncertainty, basis. "
+            "design_tone, strength, and weakness must appear only as interpretations linked to visible observations, never as observations. "
             "principles contain id, observation_ids, interpretation_ids, statement and describe reusable design logic. "
             "recommendations contain id, principle_ids, target_source_ids, action, rationale, transfer_mode='principle', and avoid_copying exactly ['assets','branding','content','implementation']. "
             "Target recommendations must adapt principles to target screenshots when supplied, or give generally applicable improvement guidance when none are supplied. "
+            "When no supplied source has role target, every target_source_ids array must be empty; never use a reference source ID as a target. "
             "Never request pixel-perfect cloning, copied content, logos, branding, assets, exact DOM, exact CSS, or proprietary implementation details. "
-            "Every supplied source must be cited by an observation. All IDs are globally unique and every reference resolves. provenance contains created_by and inputs naming every source."
+            "Every supplied source must be cited by an observation. All IDs are globally unique and every reference resolves. "
+            f"provenance must contain only created_by as a non-empty string and inputs exactly equal to {json.dumps(source_ids)}; inputs contains source ID strings, never objects."
         )
 
 

@@ -6,6 +6,8 @@ from .design import (
     AVOID_COPYING,
     DESIGN_CATEGORIES,
     DESIGN_SCHEMA_VERSION,
+    INTERPRETIVE_DESIGN_CATEGORIES,
+    OBSERVATION_DESIGN_CATEGORIES,
     CodexDesignAnalyzer,
     DesignAnalyzer,
     load_design_profile,
@@ -27,6 +29,7 @@ from .model import (
 __all__ = [
     "AVOID_COPYING", "Analyzer", "CodexDesignAnalyzer", "DESIGN_CATEGORIES",
     "DESIGN_SCHEMA_VERSION", "DesignAnalyzer", "EvaluationResult",
+    "INTERPRETIVE_DESIGN_CATEGORIES", "OBSERVATION_DESIGN_CATEGORIES",
     "MAX_INPUT_BYTES", "SCHEMA_VERSION", "SourceEvidence", "ValidationError",
     "evaluate_fixture", "load_design_profile", "load_fixture", "load_record",
     "normalize_design_profile", "normalize_record", "run_analyzer",

@@ -21,6 +21,7 @@ from visparse.design import (  # noqa: E402
     AVOID_COPYING,
     DESIGN_CATEGORIES,
     DESIGN_SCHEMA_VERSION,
+    OBSERVATION_DESIGN_CATEGORIES,
     CodexDesignAnalyzer,
     DesignAnalyzer,
     load_design_profile,
@@ -64,7 +65,7 @@ def profile(references: list[SourceEvidence], targets: list[SourceEvidence] | No
             "category": category,
             "statement": f"A visible {category.replace('_', ' ')} characteristic is present.",
         }
-        for category in sorted(DESIGN_CATEGORIES - {"layout"})
+        for category in sorted(OBSERVATION_DESIGN_CATEGORIES - {"layout"})
     )
     return {
         "schema_version": DESIGN_SCHEMA_VERSION,
@@ -78,6 +79,14 @@ def profile(references: list[SourceEvidence], targets: list[SourceEvidence] | No
         "interpretations": [{
             "id": "interpretation-1", "observation_ids": ["observation-1"],
             "category": "design_tone", "statement": "The composition may feel calm.",
+            "confidence_id": "confidence-1",
+        }, {
+            "id": "interpretation-strength", "observation_ids": ["observation-1"],
+            "category": "strength", "statement": "The alignment may support scanning.",
+            "confidence_id": "confidence-1",
+        }, {
+            "id": "interpretation-weakness", "observation_ids": ["observation-1"],
+            "category": "weakness", "statement": "The same alignment may become repetitive.",
             "confidence_id": "confidence-1",
         }],
         "confidence": [{
@@ -181,6 +190,14 @@ class DesignProfileTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "copying or cloning"):
             validate_design_profile(unsafe)
 
+    def test_subjective_design_categories_are_interpretations_only(self) -> None:
+        for category in ("design_tone", "strength", "weakness"):
+            invalid = profile([evidence("source")])
+            invalid["observations"][0]["category"] = category
+            with self.subTest(category=category):
+                with self.assertRaisesRegex(ValidationError, "interpretations, not direct observations"):
+                    validate_design_profile(invalid)
+
     def test_measurements_are_finite_mechanical_numbers(self) -> None:
         base = profile([evidence("source")])
         for value in ("spacious", True, float("inf")):
@@ -204,7 +221,9 @@ class DesignProfileTests(unittest.TestCase):
     def test_codex_adapter_supports_multiple_images_and_cleans_up(self) -> None:
         references = [evidence("desktop", b"desktop"), evidence("mobile", b"mobile")]
         targets = [evidence("target", b"target")]
-        runner = FakeRunner(ProcessResult(0, json.dumps(profile(references, targets)), "progress"))
+        expected = profile(references, targets)
+        expected["measurements"] = []
+        runner = FakeRunner(ProcessResult(0, json.dumps(expected), "progress"))
         result = CodexDesignAnalyzer(runner=runner, timeout_seconds=9).analyze(references, targets)
         self.assertEqual(len(result["sources"]), 3)
         self.assertEqual(runner.payloads, [b"desktop", b"mobile", b"target"])
@@ -212,6 +231,9 @@ class DesignProfileTests(unittest.TestCase):
         self.assertEqual(runner.timeout, 9)
         self.assertEqual(runner.argv[runner.argv.index("--") + 1], runner.argv[-1])
         self.assertIn("Never request pixel-perfect cloning", runner.argv[-1])
+        self.assertIn("never use a reference source ID as a target", runner.argv[-1])
+        self.assertIn('inputs exactly equal to ["desktop", "mobile", "target"]', runner.argv[-1])
+        self.assertIn("measurements must be an empty array", runner.argv[-1])
         self.assertTrue(all(not path.exists() for path in runner.paths))
 
     def test_codex_adapter_timeout_is_stable_and_cleans_up(self) -> None:
@@ -222,10 +244,12 @@ class DesignProfileTests(unittest.TestCase):
 
     def test_codex_adapter_rejects_provider_and_validation_failures(self) -> None:
         source = evidence("source")
+        untrusted_measurement = profile([source])
         cases = (
             (ProcessResult(1, "", "Not logged in; run codex login"), CodexAuthenticationError),
             (ProcessResult(0, "not json", ""), CodexJSONError),
             (ProcessResult(0, "{}", ""), CodexValidationError),
+            (ProcessResult(0, json.dumps(untrusted_measurement), ""), CodexValidationError),
         )
         for result, expected in cases:
             with self.subTest(expected=expected.__name__):
