@@ -1,0 +1,77 @@
+schema_version: 2
+commands:
+  test:
+    argv: ["python3", "-m", "unittest", "discover", "-s", "tests", "-v"]
+    cwd: "."
+  compile:
+    argv: ["python3", "-m", "compileall", "-q", "src", "tests"]
+    cwd: "."
+evaluators:
+  - id: unit-tests
+    provider_id: process.harness
+    command_ref: test
+    criterion_ids: [tests-pass]
+  - id: bytecode-compilation
+    provider_id: process.harness
+    command_ref: compile
+    criterion_ids: [sources-compile]
+rules:
+  - "Implement GitHub Issue #1 as a focused, provider-independent structured analysis layer."
+  - "Keep evidence, measurements, observations, interpretations, confidence, and provenance distinct."
+  - "Prefer a small dependency-free v0.1 that is useful to downstream AI agents and fully tested."
+paths:
+  writable:
+    - "src/**"
+    - "tests/**"
+    - "docs/**"
+    - "examples/**"
+    - "README.md"
+    - "CHANGELOG.md"
+    - "LICENSE"
+    - "pyproject.toml"
+    - ".gitignore"
+  protected:
+    - ".git/**"
+    - ".fleet/**"
+    - ".env*"
+    - ".github/workflows/**"
+  generated:
+    - "build/**"
+    - "dist/**"
+    - "**/__pycache__/**"
+verification:
+  required: ["test", "compile"]
+  evidence_freshness: "exact_diff"
+  review:
+    required: true
+    block_severities: ["critical", "high"]
+network:
+  mode: "disabled"
+  https_domains: []
+  ports: []
+install:
+  ecosystems: []
+  existing_lock: "deny"
+  new_dependency: "deny"
+  manifest_lock_mutation: "deny"
+  lifecycle_scripts: "deny"
+  new_registry_domain: "deny"
+  host_global: "deny"
+approvals:
+  process_shell: "required"
+  new_dependency: "deny"
+  manifest_lock_mutation: "deny"
+  lifecycle_scripts: "deny"
+  new_registry_domain: "deny"
+  promotion: "required"
+worker:
+  allowed: ["codex_cli"]
+  allowed_strategy_ids: ["codex-luna-max", "codex-sol-high"]
+  adaptive_routing: true
+  local_backend: false
+budgets:
+  wall_seconds: 3600.0
+  worker_turns: 16
+  processes: 60
+  download_bytes: 0
+  artifact_bytes: 100000000
