@@ -196,3 +196,11 @@ features into requirements. Safe Markdown and media reports share neutral scope 
 so a role refers to the same subject in both. Declared availability does not verify
 suitable assets, composition or visual fidelity. `design-trace` covers feature and
 principle selection; these optional capability notes are reported by `design-media-check`.
+
+Live `design-extract` calls default to a 300-second timeout. Use
+`--timeout-seconds 450` to choose a finite limit from 1 through 900 seconds; the
+Python `CodexSemanticExtractor(timeout_seconds=...)` uses the same bounds. Rich
+extractions in the two-site regression check took about 241–246 seconds, exceeding
+the previous 180-second default. A larger timeout does not guarantee completion.
+Timeouts terminate the call and are reported without retry, allowance reset, purchase
+or provider/model switch. Stored `--predictions` remain offline and ignore this option.
