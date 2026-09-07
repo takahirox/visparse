@@ -79,7 +79,16 @@ class CliDesignTests(unittest.TestCase):
             analyzer.analyze.side_effect = lambda references, targets: profile(references, targets)
             with patch("visparse.cli.CodexDesignAnalyzer", return_value=analyzer) as factory, redirect_stdout(io.StringIO()):
                 self.assertEqual(main(["analyze-design", str(path), "--intent", "preserve", "--timeout-seconds", "450"]), 0)
-            factory.assert_called_once_with(intent="preserve", timeout_seconds=450)
+            factory.assert_called_once_with(intent="preserve", timeout_seconds=450, estimate_geometry=False)
+
+    def test_geometry_opt_in_reaches_adapter(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "viewport.png"; path.write_bytes(b"image")
+            analyzer = Mock()
+            analyzer.analyze.side_effect = lambda references, targets: profile(references, targets)
+            with patch("visparse.cli.CodexDesignAnalyzer", return_value=analyzer) as factory, redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["analyze-design", str(path), "--estimate-geometry"]), 0)
+            factory.assert_called_once_with(intent="adapt", timeout_seconds=300, estimate_geometry=True)
 
 
 if __name__ == "__main__":

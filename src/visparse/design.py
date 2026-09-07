@@ -357,6 +357,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
     executable: str = "codex"
     timeout_seconds: float = 300.0
     intent: str = "adapt"
+    estimate_geometry: bool = False
 
     def analyze(
         self,
@@ -364,6 +365,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         targets: Sequence[SourceEvidence] = (),
     ) -> dict[str, Any]:
         check(self.intent in ("preserve", "adapt"), "intent must be preserve or adapt")
+        check(type(self.estimate_geometry) is bool, "estimate_geometry must be a boolean")
         number(self.timeout_seconds, 1, 900)
         if not references:
             raise ValidationError("at least one reference screenshot is required")
@@ -375,7 +377,9 @@ class CodexDesignAnalyzer(DesignAnalyzer):
                     os.chmod(image.name, 0o600)
                     image.write(evidence.payload)
                     paths.append(image.name)
-            result = self.runner.run(self._argv(paths, self._prompt(references, targets, intent=self.intent)), timeout=self.timeout_seconds)
+            result = self.runner.run(self._argv(paths, self._prompt(
+                references, targets, intent=self.intent, estimate_geometry=self.estimate_geometry,
+            )), timeout=self.timeout_seconds)
         except FileNotFoundError:
             raise CodexUnavailableError("codex executable is unavailable; install Codex CLI or configure executable") from None
         except subprocess.TimeoutExpired:
@@ -412,8 +416,29 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         ]
 
     @staticmethod
-    def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence], *, intent: str = "adapt") -> str:
+    def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence], *,
+                intent: str = "adapt", estimate_geometry: bool = False) -> str:
         check(intent in ("preserve", "adapt"), "intent must be preserve or adapt")
+        check(type(estimate_geometry) is bool, "estimate_geometry must be a boolean")
+        geometry = (
+            "The caller declares each attachment is a complete single-viewport capture. "
+            "Opt-in geometry estimation: for clearly identifiable regions, you may supply approximate "
+            "normalized bounds ONLY in interpretations linked to that region's visible observations. "
+            "Use stable neutral region names and the keys geometry.viewport_x_ratio, geometry.viewport_y_ratio, "
+            "geometry.viewport_width_ratio, geometry.viewport_height_ratio in each interpretation statement. "
+            "The origin is the top-left of the complete attached image; x and width divide by image width, "
+            "y and height by image height. Each value is between 0 and 1. These are approximate visual "
+            "estimates, never measurements, CSS pixels, document coordinates or responsive rules. "
+            "Use at most two decimal places and describe confidence, uncertain edges and rough error bounds. "
+            "Estimate only visible bounds; do not reconstruct hidden or offscreen extents. Omit indeterminate "
+            "coordinates rather than guessing. If an attachment appears cropped or full-page rather than a "
+            "single viewport, leave its viewport geometry unknown. Prefer major regions and alignment anchors; "
+            "do not enumerate a bounding box for every repeated icon. Keep numeric geometry out of observations "
+            "and measurements. Precise geometry still requires a separate trusted measurement channel. "
+        ) if estimate_geometry else (
+            "do not estimate pixel dimensions, distances or numeric ratios. "
+            "Obtain precise geometry through a separate measurement channel. "
+        )
         preservation = (
             "Analysis intent: preserve. Supply a reconstruction inventory of what is visible, including small "
             "identity/name/level labels, floating controls and overlays; do not omit them because they seem secondary. "
@@ -451,8 +476,8 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "and photographic versus illustrated media. State when a property is obscured or indeterminate. "
             "Do not replace these concrete observations with generic style adjectives. "
             "measurements must be an empty array because this VLM-only adapter has no trusted mechanical measurement channel; "
-            "do not estimate pixel dimensions, distances or numeric ratios. Directly countable lines/elements belong "
-            "in observations, not measurements. Obtain precise geometry through a separate measurement channel. "
+            + geometry +
+            "Directly countable lines/elements belong in observations, not measurements. "
             f"observations contain id, source_ids, category, statement and only directly visible facts; observation category must be one of {json.dumps(sorted(OBSERVATION_DESIGN_CATEGORIES))}. "
             "interpretations contain id, observation_ids, category, statement, confidence_id. confidence contains id, level 0..1, uncertainty, basis. "
             "design_tone, strength, and weakness must appear only as interpretations linked to visible observations, never as observations. "

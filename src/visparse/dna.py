@@ -267,7 +267,8 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
         source_map = {s["id"]: s for s in profile["sources"]}
         allowed = {sid for sid, s in source_map.items() if s["role"] == "reference"}
         dna["sources"].extend({**s, "id": "profile:" + s["id"]} for s in profile["sources"] if s["id"] in allowed)
-        confidence = {c["id"]: c["level"] for c in profile["confidence"]}
+        confidence_records = {c["id"]: c for c in profile["confidence"]}
+        confidence = {cid: c["level"] for cid, c in confidence_records.items()}
         observations = {o["id"]: o for o in profile["observations"]}
         interpretations = {i["id"]: i for i in profile["interpretations"]}
         eligible = {}
@@ -289,9 +290,14 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
                     continue
                 scope = contexts.get(eid, source_scopes[0])
                 level = confidence[record["confidence_id"]] if kind == "inferred" else None
+                details = copy.deepcopy(record)
+                if kind == "inferred":
+                    # Confidence IDs alone do not resolve in DNA. Keep the source
+                    # qualification available to downstream semantic extraction.
+                    details["confidence_assessment"] = copy.deepcopy(confidence_records[record["confidence_id"]])
                 dna["evidence"].append({"id": eid, "source_ids": ["profile:" + sid for sid in source_ids],
                                         "kind": kind, "statement": record.get("statement", record.get("name")),
-                                        "confidence": level, "scope": copy.deepcopy(scope), "details": copy.deepcopy(record)})
+                                        "confidence": level, "scope": copy.deepcopy(scope), "details": details})
                 eligible[record["id"]] = eid
                 if kind == "measured" and record["name"] in FEATURES:
                     validate_value(record["name"], record["value"], record.get("unit"))

@@ -218,3 +218,19 @@ Analysis uses only supplied images, with apps, plugins, memories, repository
 instructions and web search disabled. `--timeout-seconds` defaults to 300 and accepts
 finite values from 1 to 900. Invalid API configurations fail before launching the
 provider. Screenshot analysis does not automatically retry or spend extra allowance.
+
+For complete single-viewport screenshots, add `--estimate-geometry` (Python:
+`CodexDesignAnalyzer(estimate_geometry=True)`) to request approximate normalized
+bounds for major regions. Opting in declares that each image represents one entire
+viewport; do not use it for cropped images or full-page captures. The default remains
+qualitative. Estimates use `geometry.viewport_{x,y,width,height}_ratio`, with the
+top-left of the attached image as origin and the corresponding image dimension as
+denominator. They describe visible bounds, including clipping, not hidden extents.
+
+The analyzer is instructed to put these estimates only in linked interpretations,
+with confidence and uncertainty. Semantic extraction retains inferred provenance
+and confidence ceilings; DNA evidence also retains the source confidence assessment
+(basis and uncertainty). Low-confidence estimates remain filtered from guidance.
+These are model estimates, not calibrated measurements or CSS pixels. The adapter
+still rejects nonempty mechanical measurements; it cannot independently verify the
+accuracy of an estimated boundary or whether an image is a complete viewport.
