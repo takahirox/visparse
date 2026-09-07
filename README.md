@@ -129,3 +129,22 @@ region used as a feature's anchor. A real zero remains zero; unknown properties 
 `status: unknown` and a null value. Validation never repairs or raises predictions.
 The extraction prompt follows this contract. Offline regressions verify the contract
 and retained guidance; they do not prove calibration or guarantee live model behavior.
+
+### Scoped coverage audit
+
+`visparse design-coverage dna.json --expectations expectations.json` audits an
+explicit checklist without a model call. An expectations file has
+`{"schema_version":"0.1","items":[{"id":"hero-kind","name":"imagery.kind","scope":{"subject":"hero","viewport":"1440x900","state":"default"},"source_status":"supported","evidence_ids":["region:hero"]}]}`.
+Each item must cite existing evidence in exactly the same scope; relationships also
+supply `relative_to`. Use `supported` when the cited content supplies the property,
+`absent` when the inspected evidence lacks it, or `unknown` when availability is
+undetermined. These are caller declarations, not automatic judgments about prose.
+
+The report separates `extraction_gap`, `source_absent`, `source_unknown`,
+`explicit_unknown`, `low_confidence`, `conflict`, `not_applicable` and `covered`.
+A known prediction against declared absence is a `declaration_conflict`. Relationship
+axes are audited separately before summarizing the expectation; mixed applicability
+is `partial`. Counts measure extraction coverage, not correctness or export retention.
+Empty checklists do not establish completeness. Screenshot instructions now request
+visible line/element counts and region relationships; precise numeric geometry still
+requires a measurement channel and is never invented by the semantic extractor.
