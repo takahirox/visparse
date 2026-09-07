@@ -15,6 +15,7 @@ from .design import load_design_profile
 from .contracts import canonical, load_json
 from .dna import build_dna, load_dna, normalize_dna
 from .semantic import CodexSemanticExtractor, apply_semantics, extract_design
+from .media import assess_media
 from .render import render_design
 from .compare import compare_design
 from .analysis_eval import evaluate_analysis
@@ -53,6 +54,13 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    media = subparsers.add_parser("design-media-check")
+    media.add_argument("path", help="reference DNA")
+    media.add_argument("--capabilities", required=True)
+    media.add_argument("--generated", help="optional generated DNA for separate deviation reporting")
+    media.add_argument("--intent", choices=["preserve", "adapt"], default="preserve")
+    media.add_argument("--min-confidence", type=float, default=0.6)
+    media.add_argument("--generation-safe", action="store_true")
     normalize = subparsers.add_parser("design-normalize")
     normalize.add_argument("path", nargs="?", help="Design Profile JSON; optional with --inspection")
     normalize.add_argument("--inspection", help="collector inspection bundle")
@@ -80,6 +88,7 @@ def _parser() -> argparse.ArgumentParser:
     export.add_argument("path")
     export.add_argument("--brief", required=True)
     export.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
+    export.add_argument("--capabilities", help="optional media capability declaration")
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
     analyze_design = subparsers.add_parser("analyze-design")
@@ -98,6 +107,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "design-media-check":
+            result = assess_media(load_dna(_read_bounded(args.path)), load_json(_read_bounded(args.capabilities)),
+                intent=args.intent, min_confidence=args.min_confidence, generation_safe=args.generation_safe,
+                generated=load_dna(_read_bounded(args.generated)) if args.generated else None)
+            sys.stdout.write(canonical(result))
+            return 0
         if args.command == "design-extract":
             dna = load_dna(_read_bounded(args.path))
             result = apply_semantics(dna, load_json(_read_bounded(args.predictions))) if args.predictions else extract_design(dna, CodexSemanticExtractor())
@@ -126,7 +141,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             elif args.command == "design-roundtrip":
                 result = evaluate_roundtrip(value)
             else:
-                result = prepare_roundtrip(value, _read_bounded(args.brief).decode("utf-8"), intent=args.intent)
+                result = prepare_roundtrip(value, _read_bounded(args.brief).decode("utf-8"), intent=args.intent,
+                    capabilities=load_json(_read_bounded(args.capabilities)) if args.capabilities else None)
             sys.stdout.write(canonical(result))
             return 0
         if args.command == "analyze":

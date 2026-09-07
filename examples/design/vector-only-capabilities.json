@@ -1,0 +1,8 @@
+{
+  "schema_version": "0.1",
+  "kinds": {
+    "photography": "unavailable",
+    "illustration": "available",
+    "product-ui": "unknown"
+  }
+}

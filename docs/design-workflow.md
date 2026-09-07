@@ -408,3 +408,48 @@ not agreement. New source/measurement vocabulary is additive and version-gated.
 Evaluate target-bearing relationships with `design-compare`; the scalar expected-
 claim format in `eval-analysis` rejects relationship claims rather than silently
 ignoring the target. Other new scalar/color/count features work in both evaluators.
+
+### Media requirements and capability assessment (vocabulary 0.4)
+
+A photographic hero can be correctly analyzed yet replaced with an illustration
+because of generation constraints. `media_requirements` retains region-scoped
+kind, prominence, treatment, framing, subject arrangement and text space, with
+feature status, origin, confidence and supporting evidence. Prominence is not
+inferred from kind alone. Vocabulary 0.4 adds controlled prominence/framing/text
+space/arrangement values; all earlier vocabularies remain readable.
+
+```sh
+visparse design-media-check enriched-dna.json \
+  --capabilities examples/design/vector-only-capabilities.json --intent preserve
+visparse design-export enriched-dna.json --brief brief.md --intent preserve \
+  --capabilities examples/design/vector-only-capabilities.json
+```
+
+Capability schema 0.1 has `kinds`: photography, illustration and product-ui may
+be available/unavailable/unknown. Omitted declarations mean unknown, not failure.
+A vector-only environment declares photography unavailable; raster capability
+alone is not proof that suitable photographs exist. No provider-specific API or
+asset paths are needed. Invalid declarations fail validation rather than being
+silently repaired.
+
+The offline API `assess_media(dna, capabilities, intent=..., generated=...)` returns
+requirements and per-scope assessments. A supported unavailable kind is a mismatch
+in preserve mode and an explicit tradeoff in adapt mode. Available means only
+`compatible_declared`; it never verifies quality, framing or successful reproduction.
+Mixed media needs finer region evidence; unknown/conflicting/low-confidence evidence
+stays unknown. Absent media is not applicable. Preservation importance is explicitly
+attributed to export intent, not newly promoted to an objective source fact.
+
+Optional generated DNA reports represented media-kind deviations separately from
+capability limitations. Missing structured evidence cannot distinguish analysis
+omissions from export omissions and is reported as such. Multiple cause categories
+can coexist. This is a media-kind assessment, not a full visual similarity scorer.
+
+`--generation-safe` aliases scopes and omits free-text method/uncertainty/source IDs
+while keeping controlled characteristics and confidence/status. `design-export`
+adds this safe assessment as caller-facing metadata without changing the permitted
+reference-blind generator inputs. Its intent matches the design export. Standalone
+`design-media-check` defaults to preserve; existing design exports still default to
+adapt. CLI success means the report was produced (exit 0), not that fidelity passed;
+callers inspect statuses. The checker never selects, fetches, generates, or silently
+substitutes assets, and never triggers retries or provider/purchase operations.

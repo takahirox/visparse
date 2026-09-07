@@ -60,3 +60,6 @@ __all__ = [
 from .semantic import SemanticExtractor, CodexSemanticExtractor, apply_semantics, extract_design
 
 __all__ += ["SemanticExtractor", "CodexSemanticExtractor", "apply_semantics", "extract_design"]
+
+from .media import media_requirements, assess_media, validate_capabilities
+__all__ += ["media_requirements", "assess_media", "validate_capabilities"]
