@@ -24,7 +24,7 @@ def calibration(pairs: list[tuple[float, float]]) -> dict:
 
 
 def _matches(name, value, expected, tolerance):
-    if FEATURES[name][1] in {"text", "enum"}:
+    if FEATURES[name][1] in {"text", "enum", "color"}:
         return value == expected
     return abs(value - expected) <= tolerance
 
@@ -43,8 +43,9 @@ def _validate_fixture(fixture):
         for claim in expected.values():
             shape(claim, {"id", "name", "scope", "unit", "kind", "tolerance", "annotations"})
             check(claim["name"] in FEATURES, "unsupported expected feature")
+            check(claim["name"] != "layout.relative_position", "relationship evaluation requires design-compare with scoped targets")
             spec = FEATURES[claim["name"]]
-            validate_value(claim["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else 0), claim["unit"])
+            validate_value(claim["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" else 0), claim["unit"])
             validate_scope(claim["scope"])
             check(claim["kind"] in {"grounding", "interpretive"}, "invalid evaluation kind")
             number(claim["tolerance"], 0)

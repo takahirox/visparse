@@ -10,7 +10,7 @@ from .dna import DIMENSIONS, FEATURES, feature_groups, group_status, validate_dn
 
 def value_similarity(name, left, right, *, tolerance=None):
     spec = FEATURES[name]
-    if spec[1] in {"enum", "text"}:
+    if spec[1] in {"enum", "text", "color"}:
         return float(left == right)
     absolute = spec[3] if tolerance is None else tolerance
     delta = abs(left - right)
@@ -28,7 +28,7 @@ def compare_design(reference: dict, generated: dict, *, min_confidence=0.6, tole
     tolerances = tolerances or {}
     check(isinstance(tolerances, dict), "tolerances must be an object")
     for key, value in tolerances.items():
-        check(key in FEATURES and FEATURES[key][1] not in {"enum", "text"}, "invalid tolerance feature")
+        check(key in FEATURES and FEATURES[key][1] not in {"enum", "text", "color"}, "invalid tolerance feature")
         number(value, 0)
     left, right = feature_groups(reference), feature_groups(generated)
     def evidence_summary(dna, group):
@@ -46,6 +46,8 @@ def compare_design(reference: dict, generated: dict, *, min_confidence=0.6, tole
         row = {"name": name, "scope": feature["scope"], "reference_status": ls, "generated_status": rs,
                "reference": lgroup[0]["value"] if lgroup else None, "generated": rgroup[0]["value"] if rgroup else None,
                "score": None, "difference": None}
+        if "relative_to" in feature:
+            row["relative_to"] = feature["relative_to"]
         row["evidence"] = {"reference": evidence_summary(reference, lgroup), "generated": evidence_summary(generated, rgroup)}
         if ls == rs == "not_applicable":
             reason = "not_applicable"

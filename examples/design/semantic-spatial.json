@@ -1,0 +1,212 @@
+{
+  "dna": {
+    "schema_version": "0.1",
+    "vocabulary_version": "0.1",
+    "sources": [
+      {
+        "id": "source",
+        "kind": "screenshot",
+        "locator": "https://reference.invalid",
+        "role": "reference"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "observation",
+        "source_ids": [
+          "source"
+        ],
+        "kind": "observed",
+        "statement": "Synthetic page: a two-line condensed headline above a hero shares a left edge with the content container. Its background is sampled separately. A cookie button fills its parent.",
+        "confidence": null,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "SOURCE_BRAND hero"
+        },
+        "details": {}
+      }
+    ],
+    "features": [],
+    "principles": [],
+    "gaps": [],
+    "provenance": {
+      "created_by": "synthetic fixture",
+      "inputs": [
+        "source"
+      ]
+    }
+  },
+  "prediction": {
+    "schema_version": "0.2",
+    "regions": [
+      {
+        "id": "headline",
+        "viewport": "1440x900",
+        "state": "default",
+        "evidence_ids": [
+          "observation"
+        ],
+        "confidence": 0.9,
+        "method": "synthetic region interpretation",
+        "uncertainty": "Only this desktop view is supplied."
+      },
+      {
+        "id": "hero",
+        "viewport": "1440x900",
+        "state": "default",
+        "evidence_ids": [
+          "observation"
+        ],
+        "confidence": 0.9,
+        "method": "synthetic region interpretation",
+        "uncertainty": "Only this desktop view is supplied."
+      },
+      {
+        "id": "container",
+        "viewport": "1440x900",
+        "state": "default",
+        "evidence_ids": [
+          "observation"
+        ],
+        "confidence": 0.9,
+        "method": "synthetic region interpretation",
+        "uncertainty": "Only this desktop view is supplied."
+      },
+      {
+        "id": "button",
+        "viewport": "1440x900",
+        "state": "default",
+        "evidence_ids": [
+          "observation"
+        ],
+        "confidence": 0.9,
+        "method": "synthetic region interpretation",
+        "uncertainty": "Only this desktop view is supplied."
+      }
+    ],
+    "features": [
+      {
+        "name": "typography.line_count",
+        "value": 2,
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "headline"
+        },
+        "evidence_ids": [
+          "region:headline"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS."
+      },
+      {
+        "name": "typography.width_style",
+        "value": "condensed",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "headline"
+        },
+        "evidence_ids": [
+          "region:headline"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS."
+      },
+      {
+        "name": "color.background_hex",
+        "value": "#203060",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "hero"
+        },
+        "evidence_ids": [
+          "region:hero"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS."
+      },
+      {
+        "name": "layout.relative_position",
+        "value": "above",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "headline"
+        },
+        "evidence_ids": [
+          "region:headline"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS.",
+        "relative_to": "hero"
+      },
+      {
+        "name": "layout.relative_position",
+        "value": "aligned-left",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "headline"
+        },
+        "evidence_ids": [
+          "region:headline"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS.",
+        "relative_to": "container"
+      },
+      {
+        "name": "geometry.width_mode",
+        "value": "fill-parent",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "button"
+        },
+        "evidence_ids": [
+          "region:button"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS."
+      },
+      {
+        "name": "geometry.viewport_width_ratio",
+        "value": 0.67,
+        "unit": "ratio",
+        "status": "known",
+        "confidence": 0.85,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "container"
+        },
+        "evidence_ids": [
+          "region:container"
+        ],
+        "method": "stored synthetic prediction",
+        "uncertainty": "Visual estimate, not measured CSS."
+      }
+    ]
+  }
+}
