@@ -69,7 +69,16 @@ class CodexSemanticExtractor:
             "Do not add policy constraints or recommendations. Extract observations, not proposed improvements. "
             "Do not invent numbers, colors, or missing dimensions. Multiple contradictory predictions may be retained. "
             "Use null unit for enum/text/number/color/count, otherwise use the vocabulary kind as unit. "
-            "Every prediction is inferred and must not exceed its supporting evidence confidence. "
+            "Every prediction is inferred. Confidence estimates the probability that the scoped claim is correct "
+            "given the supplied evidence; it is not a copy of source metadata. "
+            "Observed or measured evidence with confidence null has unspecified confidence, not zero. "
+            "Assign a justified extraction confidence from its content; do not assign zero merely because "
+            "source confidence is null, and do not assume certainty merely because evidence is observed. "
+            "Only supporting evidence of kind inferred imposes a numeric confidence ceiling. "
+            "A region's confidence estimates whether its identity and scope are supported; apply the same "
+            "inferred-evidence ceiling to regions. Known features citing an inferred region must not exceed "
+            "that region's confidence. A genuine inferred confidence of zero remains a ceiling of zero. "
+            "If a property cannot be determined, return status unknown with value null, not a guessed known value. "
             "Do not reset usage limits, buy allowance, or switch providers/models; stop on a limit.\n"
             + json.dumps({"vocabulary": vocabulary, "evidence": dna["evidence"]})
         )
