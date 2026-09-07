@@ -87,6 +87,7 @@ def _parser() -> argparse.ArgumentParser:
     render.add_argument("--min-confidence", type=float, default=0.6)
     render.add_argument("--generation-safe", action="store_true")
     render.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
+    render.add_argument("--capabilities", help="optional media capability declaration included in Markdown")
     compare = subparsers.add_parser("design-compare")
     compare.add_argument("path", help="reference DNA")
     compare.add_argument("generated", help="generated DNA")
@@ -149,7 +150,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command in {"design-render", "design-compare", "design-validate", "design-export", "eval-analysis", "design-roundtrip"}:
             value = load_json(_read_bounded(args.path))
             if args.command == "design-render":
-                sys.stdout.write(render_design(value, mode=args.mode, min_confidence=args.min_confidence, generation_safe=args.generation_safe, intent=args.intent))
+                sys.stdout.write(render_design(value, mode=args.mode, min_confidence=args.min_confidence,
+                    generation_safe=args.generation_safe, intent=args.intent,
+                    capabilities=load_json(_read_bounded(args.capabilities)) if args.capabilities else None))
                 return 0
             if args.command == "design-compare":
                 result = compare_design(value, load_dna(_read_bounded(args.generated)), min_confidence=args.min_confidence,

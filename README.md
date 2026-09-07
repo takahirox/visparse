@@ -178,3 +178,21 @@ Coverage and retention are separate: a supported free-text feature can be covere
 filtered from safe guidance. Neither establishes visual fidelity.
 Distinct nonstandard states and viewports receive distinct neutral labels, rather than
 being collapsed into one unspecified label. Original labels do not leave safe guidance.
+
+### Media limitations in generation input
+
+Pass `--capabilities capabilities.json` to `design-render` to include declared media
+compatibility in DESIGN.md. `design-export --capabilities ...` now includes the same
+findings inside `design_md`, which is an allowed generator input, as well as its
+structured diagnostic report. Without this option, rendering is unchanged.
+
+For example, `{"schema_version":"0.1","kinds":{"photography":"unavailable","illustration":"available"}}`
+produces a preservation `mismatch` for supported photographic media, or an adaptation
+`tradeoff`. Guidance requires any chosen substitution and its expected appearance
+change to be recorded; it does not select assets or a substitute automatically.
+Unknown results distinguish missing, low-confidence, conflicting, explicitly unknown
+and mixed media kinds from missing capability declarations. They do not turn rejected
+features into requirements. Safe Markdown and media reports share neutral scope labels,
+so a role refers to the same subject in both. Declared availability does not verify
+suitable assets, composition or visual fidelity. `design-trace` covers feature and
+principle selection; these optional capability notes are reported by `design-media-check`.
