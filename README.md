@@ -118,3 +118,14 @@ python -m compileall -q src tests examples
 ```
 
 See `docs/architecture.md` for scope and trust boundaries and `docs/evaluation.md` for the inspectable evaluation method.
+
+### Extraction confidence
+
+Semantic confidence estimates whether a scoped claim is correct given the supplied
+content. Missing (`null`) confidence on observed or measured evidence is unspecified,
+not zero and not certainty. The extractor must assign its own justified confidence.
+Only inferred supporting evidence imposes a numeric ceiling, including an inferred
+region used as a feature's anchor. A real zero remains zero; unknown properties use
+`status: unknown` and a null value. Validation never repairs or raises predictions.
+The extraction prompt follows this contract. Offline regressions verify the contract
+and retained guidance; they do not prove calibration or guarantee live model behavior.

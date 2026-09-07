@@ -73,3 +73,55 @@ class SemanticTests(unittest.TestCase):
             with redirect_stdout(output): code=main(['design-extract',str(d),'--predictions',str(p)])
             self.assertEqual(code,0)
             self.assertTrue(json.loads(output.getvalue())['features'])
+
+    def test_null_observation_confidence_and_inference_ceilings(self):
+        # Two offline reproductions of the repeat experiment's observed evidence.
+        # These check the contract, not the accuracy of a live model.
+        for kind in ('lobby', 'corporate'):
+            fixture = json.loads((ROOT / f'examples/design/semantic-{kind}.json').read_text())
+            evidence = fixture['dna']['evidence'][0]
+            self.assertIsNone(evidence['confidence'])
+            result = apply_semantics(fixture['dna'], fixture['prediction'])
+            self.assertIn(fixture['expected'], render_design(result, intent='preserve'))
+            evidence.update(kind='inferred', confidence=0.4)
+            with self.assertRaisesRegex(ValidationError, 'exceeds supporting inference'):
+                apply_semantics(fixture['dna'], fixture['prediction'])
+            feature = fixture['prediction']['features'][0]
+            feature['confidence'] = 0.3
+            self.assertIn('low_confidence', render_design(apply_semantics(fixture['dna'], fixture['prediction'])))
+            evidence['confidence'] = 0
+            with self.assertRaises(ValidationError):
+                apply_semantics(fixture['dna'], fixture['prediction'])
+            feature['confidence'] = 0
+            result = apply_semantics(fixture['dna'], fixture['prediction'])
+            self.assertEqual(result['features'][0]['confidence'], 0)
+
+    def test_region_confidence_does_not_turn_missing_metadata_into_zero(self):
+        fixture = sample()
+        source_scope = fixture['dna']['evidence'][0]['scope']
+        region = dict(id='hero', viewport=source_scope['viewport'], state=source_scope['state'],
+                      evidence_ids=['observation'], confidence=0.8, method='Identify visible hero',
+                      uncertainty='Only the supplied viewport')
+        prediction = fixture['prediction']
+        prediction.update(schema_version='0.2', regions=[region])
+        feature = prediction['features'][0]
+        feature.update(scope={**source_scope, 'subject':'hero'}, evidence_ids=['region:hero'], confidence=0.8)
+        result = apply_semantics(fixture['dna'], prediction)
+        self.assertEqual(result['features'][0]['confidence'], 0.8)
+        region['confidence'] = 0
+        with self.assertRaises(ValidationError):
+            apply_semantics(fixture['dna'], prediction)
+        feature['confidence'] = 0
+        self.assertIn('low_confidence', render_design(apply_semantics(fixture['dna'], prediction)))
+
+    def test_provider_instructions_explain_unspecified_confidence(self):
+        fixture = sample()
+        class Runner:
+            def run(self, argv, **kwargs):
+                self.prompt = argv[-1]
+                return ProcessResult(0, canonical(fixture['prediction']), '')
+        runner = Runner()
+        extract_design(fixture['dna'], CodexSemanticExtractor(runner=runner))
+        self.assertIn('unspecified confidence, not zero', runner.prompt)
+        self.assertIn('Only supporting evidence of kind inferred', runner.prompt)
+        self.assertIn('genuine inferred confidence of zero', runner.prompt)
