@@ -24,3 +24,10 @@ A successful result is:
 The fixture covers a valid record with source, deterministic pixel measurement, and web interaction, plus an observation with a broken evidence reference. Unit tests cover canonicalization, limits, duplicate keys and IDs, confidence ranges, temporal events, analyzer identity, CLI behavior, and summary mismatches.
 
 This methodology evaluates contract compliance, not visual accuracy. Accuracy benchmarks should preserve raw source identities and separately label measured values, direct observations, interpretations, uncertainty, and provenance. Human or model judgments must never be relabeled as deterministic measurements.
+
+The design workflow now provides separate `eval-analysis` (scoped grounding,
+human agreement, calibration), `design-compare` (stored DNA differences), and
+`design-roundtrip` (stored generation runs and baselines) commands. See
+[design-workflow.md](design-workflow.md) for their versioned fixtures, metric
+denominators, uncertainty handling, and limitations. The original `evaluate`
+contract and behavior remain unchanged.

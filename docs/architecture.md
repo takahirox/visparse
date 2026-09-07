@@ -2,6 +2,13 @@
 
 Visparse 0.1 has six deliberately small layers.
 
+The original evidence layers below are complemented by the optional design
+workflow: `dna.py` and `collector_contract.py` normalize evidence, `render.py`
+compiles guidance, and `compare.py`, `analysis_eval.py`, and `roundtrip.py` evaluate
+stored artifacts. The separately imported `visparse_collector` package owns
+optional Playwright execution. See [design-workflow.md](design-workflow.md) for
+these contracts and their trust boundaries.
+
 1. `model.py` defines the schema contract, including file-backed `SourceEvidence`, bounded JSON and source reads, reference checks, canonical serialization, and structural summaries.
 2. `analyzer.py` defines the provider-neutral `Analyzer` boundary and `run_analyzer`; `codex.py` supplies the first concrete adapter and a mockable `ProcessRunner`.
 3. `evaluation.py` runs inspectable JSON cases with exact validity and summary expectations, plus analyzer cases that can run offline with a fake process runner.

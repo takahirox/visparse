@@ -11,6 +11,13 @@ from typing import Sequence
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
 from .design import CodexDesignAnalyzer, normalize_design_profile
+from .design import load_design_profile
+from .contracts import canonical, load_json
+from .dna import build_dna, load_dna, normalize_dna
+from .render import render_design
+from .compare import compare_design
+from .analysis_eval import evaluate_analysis
+from .roundtrip import evaluate_roundtrip, prepare_roundtrip
 from .inspection import (
     inspection_capabilities,
     load_inspection,
@@ -45,6 +52,28 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    normalize = subparsers.add_parser("design-normalize")
+    normalize.add_argument("path", nargs="?", help="Design Profile JSON; optional with --inspection")
+    normalize.add_argument("--inspection", help="collector inspection bundle")
+    normalize.add_argument("--annotations", help="explicit inferred feature mappings and transfer policies")
+    normalize.add_argument("--contexts", help="namespaced profile source/evidence scope mappings")
+    render = subparsers.add_parser("design-render")
+    render.add_argument("path")
+    render.add_argument("--mode", choices=["compact", "full"], default="compact")
+    render.add_argument("--format", choices=["markdown"], default="markdown")
+    render.add_argument("--min-confidence", type=float, default=0.6)
+    render.add_argument("--generation-safe", action="store_true")
+    compare = subparsers.add_parser("design-compare")
+    compare.add_argument("path", help="reference DNA")
+    compare.add_argument("generated", help="generated DNA")
+    compare.add_argument("--min-confidence", type=float, default=0.6)
+    compare.add_argument("--tolerances", help="JSON map of feature names to absolute tolerances")
+    for name in ("design-validate", "eval-analysis", "design-roundtrip"):
+        command = subparsers.add_parser(name)
+        command.add_argument("path")
+    export = subparsers.add_parser("design-export")
+    export.add_argument("path")
+    export.add_argument("--brief", required=True)
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
     analyze_design = subparsers.add_parser("analyze-design")
@@ -63,6 +92,32 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "design-normalize":
+            profile = load_design_profile(_read_bounded(args.path)) if args.path else None
+            inspection = load_inspection(_read_bounded(args.inspection)) if args.inspection else None
+            annotations = load_json(_read_bounded(args.annotations)) if args.annotations else None
+            contexts = load_json(_read_bounded(args.contexts)) if args.contexts else None
+            sys.stdout.write(normalize_dna(build_dna(profile, inspection=inspection, annotations=annotations, contexts=contexts)))
+            return 0
+        if args.command in {"design-render", "design-compare", "design-validate", "design-export", "eval-analysis", "design-roundtrip"}:
+            value = load_json(_read_bounded(args.path))
+            if args.command == "design-render":
+                sys.stdout.write(render_design(value, mode=args.mode, min_confidence=args.min_confidence, generation_safe=args.generation_safe))
+                return 0
+            if args.command == "design-compare":
+                result = compare_design(value, load_dna(_read_bounded(args.generated)), min_confidence=args.min_confidence,
+                    tolerances=load_json(_read_bounded(args.tolerances)) if args.tolerances else None)
+            elif args.command == "design-validate":
+                load_dna(canonical(value))
+                result = {"valid": True, "schema_version": "0.1"}
+            elif args.command == "eval-analysis":
+                result = evaluate_analysis(value)
+            elif args.command == "design-roundtrip":
+                result = evaluate_roundtrip(value)
+            else:
+                result = prepare_roundtrip(value, _read_bounded(args.brief).decode("utf-8"))
+            sys.stdout.write(canonical(result))
+            return 0
         if args.command == "analyze":
             source = SourceEvidence.from_file("source-1", args.image)
             record = CodexAnalyzer().analyze(source)

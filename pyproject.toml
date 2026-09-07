@@ -8,8 +8,15 @@ license = { text = "MIT" }
 authors = [{ name = "Visparse contributors" }]
 dependencies = []
 
+[project.optional-dependencies]
+collector = ["playwright>=1.49,<2"]
+
 [project.scripts]
 visparse = "visparse.cli:main"
+visparse-collector = "visparse_collector.cli:main"
+
+[tool.setuptools.package-data]
+visparse_collector = ["inventory.js"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }

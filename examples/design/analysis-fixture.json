@@ -1,0 +1,254 @@
+{
+  "schema_version": "0.1",
+  "items": [
+    {
+      "id": "synthetic-page",
+      "evidence": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "font size is 32 CSS px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 32,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "hero appears asymmetric",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 32,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "asymmetric",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "expected": [
+        {
+          "id": "font",
+          "name": "typography.font_size",
+          "scope": {
+            "viewport": "unspecified",
+            "state": "default",
+            "subject": "page"
+          },
+          "unit": "px",
+          "kind": "grounding",
+          "tolerance": 1,
+          "annotations": []
+        },
+        {
+          "id": "hero",
+          "name": "layout.hero_pattern",
+          "scope": {
+            "viewport": "unspecified",
+            "state": "default",
+            "subject": "page"
+          },
+          "unit": null,
+          "kind": "interpretive",
+          "tolerance": 0,
+          "annotations": [
+            {
+              "annotator": "synthetic-designer-a",
+              "value": "asymmetric"
+            },
+            {
+              "annotator": "synthetic-designer-b",
+              "value": "split"
+            }
+          ]
+        }
+      ],
+      "provenance": "Hand-authored synthetic evidence and labels; no live provider or expert study."
+    }
+  ],
+  "predictions": [
+    {
+      "model": "synthetic-supported",
+      "configuration": {
+        "model_version": "synthetic-1",
+        "prompt_version": "fixture-1",
+        "input_protocol": "same synthetic evidence",
+        "parameters": {}
+      },
+      "cases": [
+        {
+          "item_id": "synthetic-page",
+          "claims": [
+            {
+              "expected_id": "font",
+              "name": "typography.font_size",
+              "scope": {
+                "viewport": "unspecified",
+                "state": "default",
+                "subject": "page"
+              },
+              "value": 32,
+              "unit": "px",
+              "confidence": 0.9,
+              "evidence_ids": [
+                "font"
+              ]
+            },
+            {
+              "expected_id": "hero",
+              "name": "layout.hero_pattern",
+              "scope": {
+                "viewport": "unspecified",
+                "state": "default",
+                "subject": "page"
+              },
+              "value": "asymmetric",
+              "unit": null,
+              "confidence": 0.6,
+              "evidence_ids": [
+                "layout"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "model": "synthetic-contradicted",
+      "configuration": {
+        "model_version": "synthetic-1",
+        "prompt_version": "fixture-1",
+        "input_protocol": "same synthetic evidence",
+        "parameters": {}
+      },
+      "cases": [
+        {
+          "item_id": "synthetic-page",
+          "claims": [
+            {
+              "expected_id": "font",
+              "name": "typography.font_size",
+              "scope": {
+                "viewport": "unspecified",
+                "state": "default",
+                "subject": "page"
+              },
+              "value": 64,
+              "unit": "px",
+              "confidence": 0.9,
+              "evidence_ids": [
+                "font"
+              ]
+            },
+            {
+              "expected_id": "hero",
+              "name": "layout.hero_pattern",
+              "scope": {
+                "viewport": "unspecified",
+                "state": "default",
+                "subject": "page"
+              },
+              "value": "asymmetric",
+              "unit": null,
+              "confidence": 0.6,
+              "evidence_ids": [
+                "layout"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

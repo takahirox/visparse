@@ -1,0 +1,971 @@
+{
+  "schema_version": "0.1",
+  "reference": {
+    "schema_version": "0.1",
+    "vocabulary_version": "0.1",
+    "sources": [
+      {
+        "id": "source",
+        "kind": "css",
+        "locator": "synthetic:reference",
+        "role": "reference"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "font",
+        "source_ids": [
+          "source"
+        ],
+        "kind": "measured",
+        "statement": "font size is 32 CSS px",
+        "confidence": null,
+        "scope": {
+          "viewport": "unspecified",
+          "state": "default",
+          "subject": "page"
+        },
+        "details": {
+          "method": "synthetic CSS fixture",
+          "value": 32,
+          "unit": "px"
+        }
+      },
+      {
+        "id": "layout",
+        "source_ids": [
+          "source"
+        ],
+        "kind": "inferred",
+        "statement": "hero appears asymmetric",
+        "confidence": 0.8,
+        "scope": {
+          "viewport": "unspecified",
+          "state": "default",
+          "subject": "page"
+        },
+        "details": {
+          "basis": "synthetic expert interpretation"
+        }
+      }
+    ],
+    "features": [
+      {
+        "id": "font-feature",
+        "name": "typography.font_size",
+        "value": 32,
+        "unit": "px",
+        "status": "known",
+        "origin": "measured",
+        "confidence": null,
+        "scope": {
+          "viewport": "unspecified",
+          "state": "default",
+          "subject": "page"
+        },
+        "evidence_ids": [
+          "font"
+        ],
+        "method": "synthetic CSS fixture"
+      },
+      {
+        "id": "layout-feature",
+        "name": "layout.hero_pattern",
+        "value": "asymmetric",
+        "unit": null,
+        "status": "known",
+        "origin": "inferred",
+        "confidence": 0.8,
+        "scope": {
+          "viewport": "unspecified",
+          "state": "default",
+          "subject": "page"
+        },
+        "evidence_ids": [
+          "layout"
+        ],
+        "method": "explicit synthetic annotation"
+      }
+    ],
+    "principles": [
+      {
+        "id": "principle",
+        "statement": "Use asymmetric balance around the main content.",
+        "evidence_ids": [
+          "layout"
+        ],
+        "confidence": 0.8,
+        "strength": "SHOULD",
+        "scope": {
+          "viewport": "unspecified",
+          "state": "default",
+          "subject": "page"
+        },
+        "basis": "inferred"
+      }
+    ],
+    "gaps": [
+      "Synthetic fixture; not a live model benchmark."
+    ],
+    "provenance": {
+      "created_by": "synthetic-fixture",
+      "inputs": [
+        "source"
+      ]
+    }
+  },
+  "briefs": [
+    {
+      "id": "dashboard",
+      "text": "Build a B2B analytics dashboard for a fictional project tracking service called Fieldnote.\nInclude a navigation area, three summary metrics, a recent activity table, and a date filter.\nUse original neutral content and placeholder data. Adapt the supplied design principles to this information hierarchy.\n"
+    }
+  ],
+  "runs": [
+    {
+      "id": "no_guidance-1",
+      "brief_id": "dashboard",
+      "condition": "no_guidance",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 1,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 48 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 48,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is centered",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 48,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "centered",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "83e3ce1298865ca3ca841813b8b76cd8ead188b82d9ff2733670787349df56c9",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    },
+    {
+      "id": "no_guidance-2",
+      "brief_id": "dashboard",
+      "condition": "no_guidance",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 2,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 49 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 49,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is centered",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 49,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "centered",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "83e3ce1298865ca3ca841813b8b76cd8ead188b82d9ff2733670787349df56c9",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    },
+    {
+      "id": "profile-1",
+      "brief_id": "dashboard",
+      "condition": "profile",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 1,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 40 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 40,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is split",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 40,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "split",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "1900eab6c028483d7126599ee6f50de0d27907b5c65fa90524580b4b0f9852b0",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    },
+    {
+      "id": "profile-2",
+      "brief_id": "dashboard",
+      "condition": "profile",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 2,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 41 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 41,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is split",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 41,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "split",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "1900eab6c028483d7126599ee6f50de0d27907b5c65fa90524580b4b0f9852b0",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    },
+    {
+      "id": "design_md-1",
+      "brief_id": "dashboard",
+      "condition": "design_md",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 1,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 32 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 32,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is asymmetric",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 32,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "asymmetric",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "0a60c4178f46fdd75d9a8c762f87e98aadf847a0436ba5f3f0a260a5b8254917",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    },
+    {
+      "id": "design_md-2",
+      "brief_id": "dashboard",
+      "condition": "design_md",
+      "generator": "synthetic-fixture",
+      "configuration": {
+        "model_version": "none",
+        "prompt_version": "synthetic-1",
+        "generation_budget": "no model execution",
+        "parameters": {}
+      },
+      "replicate": 2,
+      "generated": {
+        "schema_version": "0.1",
+        "vocabulary_version": "0.1",
+        "sources": [
+          {
+            "id": "source",
+            "kind": "css",
+            "locator": "synthetic:reference",
+            "role": "reference"
+          }
+        ],
+        "evidence": [
+          {
+            "id": "font",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "measured",
+            "statement": "Synthetic generated font size is 33 px",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "method": "synthetic CSS fixture",
+              "value": 33,
+              "unit": "px"
+            }
+          },
+          {
+            "id": "layout",
+            "source_ids": [
+              "source"
+            ],
+            "kind": "inferred",
+            "statement": "Synthetic generated hero is asymmetric",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "details": {
+              "basis": "synthetic expert interpretation"
+            }
+          }
+        ],
+        "features": [
+          {
+            "id": "font-feature",
+            "name": "typography.font_size",
+            "value": 33,
+            "unit": "px",
+            "status": "known",
+            "origin": "measured",
+            "confidence": null,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "font"
+            ],
+            "method": "synthetic CSS fixture"
+          },
+          {
+            "id": "layout-feature",
+            "name": "layout.hero_pattern",
+            "value": "asymmetric",
+            "unit": null,
+            "status": "known",
+            "origin": "inferred",
+            "confidence": 0.8,
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "evidence_ids": [
+              "layout"
+            ],
+            "method": "explicit synthetic annotation"
+          }
+        ],
+        "principles": [
+          {
+            "id": "principle",
+            "statement": "Use asymmetric balance around the main content.",
+            "evidence_ids": [
+              "layout"
+            ],
+            "confidence": 0.8,
+            "strength": "SHOULD",
+            "scope": {
+              "viewport": "unspecified",
+              "state": "default",
+              "subject": "page"
+            },
+            "basis": "inferred"
+          }
+        ],
+        "gaps": [
+          "Synthetic fixture; not a live model benchmark."
+        ],
+        "provenance": {
+          "created_by": "synthetic-fixture",
+          "inputs": [
+            "source"
+          ]
+        }
+      },
+      "human_reviews": [
+        {
+          "reviewer": "synthetic-reviewer",
+          "score": 0.5,
+          "blinded": false,
+          "basis": "Synthetic annotation for contract regression only; not a human experiment."
+        }
+      ],
+      "input_manifest": {
+        "brief_sha256": "6a7f2d48b2f0a608013c66fce49a1522c299c427ed8f8493455adaa01feeefa0",
+        "guidance_sha256": "0a60c4178f46fdd75d9a8c762f87e98aadf847a0436ba5f3f0a260a5b8254917",
+        "workspace_isolated": true,
+        "original_artifacts_available": false
+      }
+    }
+  ]
+}

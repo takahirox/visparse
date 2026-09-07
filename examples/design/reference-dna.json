@@ -1,0 +1,114 @@
+{
+  "schema_version": "0.1",
+  "vocabulary_version": "0.1",
+  "sources": [
+    {
+      "id": "source",
+      "kind": "css",
+      "locator": "synthetic:reference",
+      "role": "reference"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "font",
+      "source_ids": [
+        "source"
+      ],
+      "kind": "measured",
+      "statement": "font size is 32 CSS px",
+      "confidence": null,
+      "scope": {
+        "viewport": "unspecified",
+        "state": "default",
+        "subject": "page"
+      },
+      "details": {
+        "method": "synthetic CSS fixture",
+        "value": 32,
+        "unit": "px"
+      }
+    },
+    {
+      "id": "layout",
+      "source_ids": [
+        "source"
+      ],
+      "kind": "inferred",
+      "statement": "hero appears asymmetric",
+      "confidence": 0.8,
+      "scope": {
+        "viewport": "unspecified",
+        "state": "default",
+        "subject": "page"
+      },
+      "details": {
+        "basis": "synthetic expert interpretation"
+      }
+    }
+  ],
+  "features": [
+    {
+      "id": "font-feature",
+      "name": "typography.font_size",
+      "value": 32,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "unspecified",
+        "state": "default",
+        "subject": "page"
+      },
+      "evidence_ids": [
+        "font"
+      ],
+      "method": "synthetic CSS fixture"
+    },
+    {
+      "id": "layout-feature",
+      "name": "layout.hero_pattern",
+      "value": "asymmetric",
+      "unit": null,
+      "status": "known",
+      "origin": "inferred",
+      "confidence": 0.8,
+      "scope": {
+        "viewport": "unspecified",
+        "state": "default",
+        "subject": "page"
+      },
+      "evidence_ids": [
+        "layout"
+      ],
+      "method": "explicit synthetic annotation"
+    }
+  ],
+  "principles": [
+    {
+      "id": "principle",
+      "statement": "Use asymmetric balance around the main content.",
+      "evidence_ids": [
+        "layout"
+      ],
+      "confidence": 0.8,
+      "strength": "SHOULD",
+      "scope": {
+        "viewport": "unspecified",
+        "state": "default",
+        "subject": "page"
+      },
+      "basis": "inferred"
+    }
+  ],
+  "gaps": [
+    "Synthetic fixture; not a live model benchmark."
+  ],
+  "provenance": {
+    "created_by": "synthetic-fixture",
+    "inputs": [
+      "source"
+    ]
+  }
+}
