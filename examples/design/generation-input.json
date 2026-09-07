@@ -1,0 +1,17 @@
+{
+  "schema_version": "0.1",
+  "brief": "Build a B2B analytics dashboard for a fictional project tracking service called Fieldnote.\nInclude a navigation area, three summary metrics, a recent activity table, and a date filter.\nUse original neutral content and placeholder data. Adapt the supplied design principles to this information hierarchy.\n",
+  "design_md": "# Design guidance\n\nRendering policy: 0.1.\n\nApply these design principles to the new product brief. Preserve its own content, branding, assets, and information architecture.\n\nSHOULD expresses transfer guidance, not proof of a universal source rule. Scope and uncertainty qualify every recommendation.\n\n## Typography\n\n- SHOULD: Use typography.font_size around 32px as a starting point for the corresponding role. [measured; viewport=unspecified, state=default, subject=page]\n\n## Composition\n\n- SHOULD: Preserve asymmetric visual balance in the hero. [inferred, confidence=0.80; viewport=unspecified, state=default, subject=page]\n\nFree-text principles, evidence IDs, provenance, and raw source locators are omitted from this generation export.\n\n## Known gaps\n\n- color_strategy: no comparable supported features\n- component_grammar: no comparable supported features\n- imagery_grammar: no comparable supported features\n- motion: no comparable supported features\n- responsive: no comparable supported features\n- semantic_character: no comparable supported features\n- spacing_geometry: no comparable supported features\n- visual_hierarchy: no comparable supported features\n",
+  "protocol": {
+    "version": "0.1",
+    "allowed_inputs": [
+      "brief",
+      "design_md"
+    ],
+    "workspace": "Use a fresh workspace containing only the allowed inputs and neutral tooling.",
+    "prohibitions": [
+      "Do not fetch the reference site or original artifacts.",
+      "Do not copy reference logos, branding, text, assets, DOM/CSS, or information architecture."
+    ]
+  }
+}

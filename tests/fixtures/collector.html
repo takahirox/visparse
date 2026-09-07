@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Synthetic collector fixture</title>
+<style>
+:root { --color-accent: #235cdd; --space-section: 32px; }
+body { margin: 24px; font: 16px/1.5 sans-serif; color: #152238; background: #fff; }
+main { max-width: 960px; display: grid; grid-template-columns: 2fr 1fr; gap: 32px; }
+h1 { font-size: 48px; line-height: 56px; letter-spacing: -1px; margin: 0; }
+section { border-top: 1px solid #8899aa; padding: 16px; }
+button { background: var(--color-accent); color: white; border: 0; padding: 12px; border-radius: 4px; }
+@media (max-width: 600px) { main { grid-template-columns: 1fr; gap: 16px; } h1 { font-size: 32px; line-height: 40px; } }
+</style>
+<main aria-label="Synthetic dashboard">
+  <section><h1>Project overview</h1><p>A neutral interface for testing design evidence.</p><button aria-label="Create project">Create</button></section>
+  <section><h2>Preferences</h2><label>Email <input type="email" value="fixture-private-value@example.invalid"></label><input type="password" value="fixture-password-value"><textarea>fixture-private-note</textarea></section>
+</main>
+</html>

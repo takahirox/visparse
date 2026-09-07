@@ -1,6 +1,11 @@
 """Public API for Visparse 0.1."""
 
 from .analyzer import Analyzer, SourceEvidence, run_analyzer
+from .dna import DNA_VERSION, VOCABULARY_VERSION, build_dna, load_dna, normalize_dna, validate_dna
+from .render import render_design
+from .compare import compare_design
+from .analysis_eval import evaluate_analysis
+from .roundtrip import evaluate_roundtrip, prepare_roundtrip
 from .evaluation import EvaluationResult, evaluate_fixture, load_fixture
 from .design import (
     AVOID_COPYING,
@@ -37,6 +42,8 @@ from .model import (
 )
 
 __all__ = [
+    "DNA_VERSION", "VOCABULARY_VERSION", "build_dna", "load_dna", "normalize_dna", "validate_dna",
+    "render_design", "compare_design", "evaluate_analysis", "evaluate_roundtrip", "prepare_roundtrip",
     "AVOID_COPYING", "Analyzer", "CAPTURE_KINDS", "CodexDesignAnalyzer", "DESIGN_CATEGORIES",
     "DESIGN_SCHEMA_VERSION", "DesignAnalyzer", "EvaluationResult",
     "INSPECTION_SCHEMA_VERSION", "INTERPRETIVE_DESIGN_CATEGORIES",

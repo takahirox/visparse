@@ -27,7 +27,7 @@ The second command intentionally fails because an evaluation fixture is not itse
 PYTHONPATH=src python -m visparse evaluate examples/evaluation_fixture.json
 ```
 
-The CLI commands include `analyze`, `analyze-design`, `inspect`, `inspect-summary`, `inspect-capabilities`, `validate`, `normalize`, `summarize`, and `evaluate`. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
+The evidence CLI commands include `analyze`, `analyze-design`, `inspect`, `inspect-summary`, `inspect-capabilities`, `validate`, `normalize`, `summarize`, and `evaluate`; the design workflow commands are described below. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
 
 ## Analyze an image end to end
 
@@ -90,6 +90,25 @@ These commands consume already collected evidence. They do not fetch a URL, laun
 Three.js support is progressive: generic canvas and WebGL evidence remains useful, explicit runtime metadata can report Three.js as detected, and a supplied `threejs` capture can carry high-level scene, camera, light, material, and object inventories. Detection never fabricates a scene graph.
 
 See `docs/inspection.md` for the bundle contract, grounding rules, and tool-wrapping guidance.
+
+## Normalize and evaluate reusable design knowledge
+
+Design DNA preserves typed features, evidence, scope, uncertainty, and transferable
+principles. The optional browser collector supplies exact CSS and geometry alongside
+screenshots and accessibility evidence. Core commands remain dependency-free.
+
+```sh
+visparse design-normalize design-profile.json > design-dna.json
+visparse design-render design-dna.json > DESIGN.md
+visparse design-compare reference-dna.json generated-dna.json
+visparse eval-analysis examples/design/analysis-fixture.json
+visparse design-roundtrip examples/design/roundtrip-fixture.json
+```
+
+Install `.[collector]` and Chromium to use `visparse-collector capture URL`.
+See [the design workflow](docs/design-workflow.md) for installation, complete
+contracts, generation exports, neutral briefs, and evaluation methodology. The
+checked-in benchmark predictions and annotations are synthetic regression fixtures.
 
 ## Development
 

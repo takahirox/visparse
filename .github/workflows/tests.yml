@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: python -m pip install .
+      - run: python -m unittest discover -s tests -v
+      - run: python -m compileall -q src tests examples
+      - run: visparse design-validate examples/design/reference-dna.json
+      - run: visparse eval-analysis examples/design/analysis-fixture.json
+      - run: visparse design-roundtrip examples/design/roundtrip-fixture.json
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+      - run: python -m pip install '.[collector]'
+      - run: python -m playwright install --with-deps chromium
+      - run: python -m unittest discover -s tests -p test_collector.py -v
+        env:
+          VISPARSE_BROWSER_TESTS: '1'

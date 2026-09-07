@@ -1,0 +1,483 @@
+{
+  "schema_version": "0.1",
+  "vocabulary_version": "0.1",
+  "sources": [
+    {
+      "id": "capture:dom",
+      "kind": "dom",
+      "locator": "synthetic:dom",
+      "role": "reference"
+    },
+    {
+      "id": "capture:shot",
+      "kind": "screenshot",
+      "locator": "synthetic:shot",
+      "role": "reference"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "capture:dom:e1",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "typography.font_size = 32.0",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median computed CSS in captured tag sample",
+        "value": 32.0,
+        "unit": "px",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e2",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "observed",
+      "statement": "typography.font_family = sans-serif",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "unanimous computed CSS in captured tag sample",
+        "value": "sans-serif",
+        "unit": null,
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e3",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "typography.font_weight = 700.0",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median computed CSS in captured tag sample",
+        "value": 700.0,
+        "unit": null,
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e4",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "typography.line_height = 40.0",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median computed CSS in captured tag sample",
+        "value": 40.0,
+        "unit": "px",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e5",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "typography.letter_spacing = -0.5",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median computed CSS in captured tag sample",
+        "value": -0.5,
+        "unit": "px",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e6",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "geometry.width = 640",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median getBoundingClientRect CSS pixels in captured tag sample",
+        "value": 640,
+        "unit": "px",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e7",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "geometry.height = 70",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "median getBoundingClientRect CSS pixels in captured tag sample",
+        "value": 70,
+        "unit": "px",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e8",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "surface.shadow_usage = 0.0",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "fraction of captured tag sample with computed box-shadow other than none",
+        "value": 0.0,
+        "unit": "ratio",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    },
+    {
+      "id": "capture:dom:e9",
+      "source_ids": [
+        "capture:dom",
+        "capture:shot"
+      ],
+      "kind": "measured",
+      "statement": "surface.border_usage = 1.0",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "details": {
+        "method": "fraction of captured tag sample with any positive computed border width",
+        "value": 1.0,
+        "unit": "ratio",
+        "node_ids": [
+          "h1"
+        ],
+        "sample_count": 1,
+        "coverage": {
+          "scanned": 1,
+          "captured": 1,
+          "truncated": false,
+          "omissions": [
+            "Synthetic visible sample."
+          ]
+        }
+      }
+    }
+  ],
+  "features": [
+    {
+      "id": "capture:dom:e1:feature",
+      "name": "typography.font_size",
+      "value": 32.0,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e1"
+      ],
+      "method": "median computed CSS in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e2:feature",
+      "name": "typography.font_family",
+      "value": "sans-serif",
+      "unit": null,
+      "status": "known",
+      "origin": "observed",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e2"
+      ],
+      "method": "unanimous computed CSS in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e3:feature",
+      "name": "typography.font_weight",
+      "value": 700.0,
+      "unit": null,
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e3"
+      ],
+      "method": "median computed CSS in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e4:feature",
+      "name": "typography.line_height",
+      "value": 40.0,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e4"
+      ],
+      "method": "median computed CSS in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e5:feature",
+      "name": "typography.letter_spacing",
+      "value": -0.5,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e5"
+      ],
+      "method": "median computed CSS in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e6:feature",
+      "name": "geometry.width",
+      "value": 640,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e6"
+      ],
+      "method": "median getBoundingClientRect CSS pixels in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e7:feature",
+      "name": "geometry.height",
+      "value": 70,
+      "unit": "px",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e7"
+      ],
+      "method": "median getBoundingClientRect CSS pixels in captured tag sample"
+    },
+    {
+      "id": "capture:dom:e8:feature",
+      "name": "surface.shadow_usage",
+      "value": 0.0,
+      "unit": "ratio",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e8"
+      ],
+      "method": "fraction of captured tag sample with computed box-shadow other than none"
+    },
+    {
+      "id": "capture:dom:e9:feature",
+      "name": "surface.border_usage",
+      "value": 1.0,
+      "unit": "ratio",
+      "status": "known",
+      "origin": "measured",
+      "confidence": null,
+      "scope": {
+        "viewport": "1440x900",
+        "state": "default",
+        "subject": "visible-sample:tag=h1"
+      },
+      "evidence_ids": [
+        "capture:dom:e9"
+      ],
+      "method": "fraction of captured tag sample with any positive computed border width"
+    }
+  ],
+  "principles": [],
+  "gaps": [
+    "capture:dom: Synthetic visible sample."
+  ],
+  "provenance": {
+    "created_by": "visparse-design-normalize/0.1",
+    "inputs": [
+      "capture:dom",
+      "capture:shot"
+    ]
+  }
+}
