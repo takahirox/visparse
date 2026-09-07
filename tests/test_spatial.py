@@ -65,3 +65,49 @@ class SpatialTests(unittest.TestCase):
         self.assertIsNone(compare_design(a,b)['dimensions']['typography']['score'])
         a['vocabulary_version']='0.2'
         with self.assertRaises(ValidationError):validate_dna(a)
+
+    def test_named_regions_cannot_be_collapsed_or_overwritten(self):
+        f=fixture();base=f['dna'];original=base['evidence'][0]
+        original['scope']['subject']='headline'
+        second={**copy.deepcopy(original),'id':'second','scope':{**original['scope'],'subject':'hero'}}
+        base['evidence'].append(second)
+        region=copy.deepcopy(f['prediction']['regions'][0])
+        region.update(id='combined',evidence_ids=[original['id'],'second'])
+        with self.assertRaisesRegex(ValidationError,'distinct named'):
+            apply_semantics(base,{'schema_version':'0.2','regions':[region],'features':[]})
+        region.update(id='page',evidence_ids=[original['id']])
+        with self.assertRaisesRegex(ValidationError,'page scope'):
+            apply_semantics(base,{'schema_version':'0.2','regions':[region],'features':[]})
+        region['id']='hero'
+        with self.assertRaisesRegex(ValidationError,'alias collides'):
+            apply_semantics(base,{'schema_version':'0.2','regions':[region],'features':[]})
+        region['id']='headline-alias'
+        result=apply_semantics(base,{'schema_version':'0.2','regions':[region],'features':[]})
+        self.assertEqual(result['evidence'][-1]['scope']['subject'],'headline-alias')
+
+    def test_local_emphasis_differences_are_not_page_conflicts(self):
+        f=fixture();base=f['dna'];e=base['evidence'][0]
+        base['evidence']=[{**copy.deepcopy(e),'id':subject,'scope':{**e['scope'],'subject':subject}}
+                          for subject in ('headline','hero')]
+        features=[dict(name='hierarchy.emphasis',value=value,unit=None,status='known',confidence=.8,
+                       scope={**e['scope'],'subject':subject},evidence_ids=[subject],
+                       method='Local emphasis from explicit scoped observation',uncertainty='Single screenshot')
+                  for subject,value in [('headline','scale'),('hero','color')]]
+        p={'schema_version':'0.2','features':features}
+        result=apply_semantics(base,p)
+        from visparse.dna import feature_groups, group_status
+        self.assertEqual([group_status(g,.6) for g in feature_groups(result).values()],['known','known'])
+        p['features'].append({**copy.deepcopy(features[0]),'value':'color'})
+        result=apply_semantics(base,p)
+        self.assertIn('conflict',[group_status(g,.6) for g in feature_groups(result).values()])
+        p['features'][0]['scope']['subject']='page'
+        with self.assertRaisesRegex(ValidationError,'scope mismatch'):
+            apply_semantics(base,p)
+
+    def test_page_observations_can_still_ground_multiple_regions(self):
+        f=fixture();f['dna']['evidence'][0]['scope']['subject']='page'
+        result=apply_semantics(f['dna'],f['prediction'])
+        self.assertGreater(len({e['scope']['subject'] for e in result['evidence']}),1)
+        f['prediction']['regions'][0]['state']='hover'
+        with self.assertRaisesRegex(ValidationError,'viewport/state'):
+            apply_semantics(f['dna'],f['prediction'])
