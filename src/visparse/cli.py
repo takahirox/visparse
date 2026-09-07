@@ -106,6 +106,9 @@ def _parser() -> argparse.ArgumentParser:
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
     analyze_design = subparsers.add_parser("analyze-design")
+    analyze_design.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
+    analyze_design.add_argument("--timeout-seconds", type=float, default=300,
+                                help="live analysis timeout, 1–900 seconds (default: 300)")
     analyze_design.add_argument(
         "images", metavar="REFERENCE_IMAGE", nargs="+",
         help="one or more reference-site screenshot paths",
@@ -186,7 +189,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 SourceEvidence.from_file(f"target-{index}", path)
                 for index, path in enumerate(args.target, 1)
             ]
-            profile = CodexDesignAnalyzer().analyze(references, targets)
+            profile = CodexDesignAnalyzer(intent=args.intent, timeout_seconds=args.timeout_seconds).analyze(references, targets)
             sys.stdout.write(normalize_design_profile(profile))
             return 0
         if args.command == "inspect-capabilities":

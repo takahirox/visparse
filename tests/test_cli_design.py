@@ -72,5 +72,15 @@ class CliDesignTests(unittest.TestCase):
         analyzer.assert_not_called()
 
 
+    def test_preservation_intent_and_timeout_reach_adapter(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "reference.png"; path.write_bytes(b"image")
+            analyzer = Mock()
+            analyzer.analyze.side_effect = lambda references, targets: profile(references, targets)
+            with patch("visparse.cli.CodexDesignAnalyzer", return_value=analyzer) as factory, redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["analyze-design", str(path), "--intent", "preserve", "--timeout-seconds", "450"]), 0)
+            factory.assert_called_once_with(intent="preserve", timeout_seconds=450)
+
+
 if __name__ == "__main__":
     unittest.main()

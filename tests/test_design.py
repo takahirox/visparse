@@ -259,5 +259,30 @@ class DesignProfileTests(unittest.TestCase):
                 self.assertTrue(all(not path.exists() for path in runner.paths))
 
 
+    def test_preservation_analysis_inventory_and_isolation(self):
+        source = evidence("source")
+        expected = profile([source]); expected["measurements"] = []
+        runner = FakeRunner(ProcessResult(0, json.dumps(expected), ""))
+        CodexDesignAnalyzer(runner=runner, intent="preserve").analyze([source])
+        self.assertEqual(runner.timeout, 300)
+        prompt = runner.argv[-1]
+        for phrase in ("reconstruction inventory", "identity/name/level labels", "headline lines",
+                       "Missing dimensions stay unknown", "do not identify"):
+            self.assertIn(phrase.lower(), prompt.lower())
+        for flag in ("apps", "plugins", "memories", "project_doc_max_bytes=0", 'web_search="disabled"'):
+            self.assertIn(flag, runner.argv)
+        self.assertNotIn("reconstruction inventory", CodexDesignAnalyzer._prompt([source], []))
+        self.assertTrue(all(not path.exists() for path in runner.paths))
+
+    def test_invalid_analysis_configuration_never_calls_provider(self):
+        from unittest.mock import Mock
+        for options in ({"intent": []}, {"intent": "guess"}, {"timeout_seconds": True},
+                        {"timeout_seconds": 0}, {"timeout_seconds": 901}, {"timeout_seconds": float("nan")}):
+            runner = Mock()
+            with self.subTest(options=options), self.assertRaises(ValidationError):
+                CodexDesignAnalyzer(runner=runner, **options).analyze([evidence("source")])
+            runner.run.assert_not_called()
+
+
 if __name__ == "__main__":
     unittest.main()

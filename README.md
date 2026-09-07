@@ -204,3 +204,17 @@ extractions in the two-site regression check took about 241–246 seconds, excee
 the previous 180-second default. A larger timeout does not guarantee completion.
 Timeouts terminate the call and are reported without retry, allowance reset, purchase
 or provider/model switch. Stored `--predictions` remain offline and ignore this option.
+
+### Preservation-oriented screenshot observations
+
+Use `visparse analyze-design screenshot.png --intent preserve` when the next step
+is visual reconstruction. This mode inventories visible regions, small identity
+labels and overlays, repeated control counts, headline line counts, relative
+placement/scale, and light/dark color distinctions. It describes roles instead of
+transcribing source branding. Unknown geometry is not invented or represented as
+mechanical measurement. The profile schema and default `adapt` intent are unchanged.
+
+Analysis uses only supplied images, with apps, plugins, memories, repository
+instructions and web search disabled. `--timeout-seconds` defaults to 300 and accepts
+finite values from 1 to 900. Invalid API configurations fail before launching the
+provider. Screenshot analysis does not automatically retry or spend extra allowance.
