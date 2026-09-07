@@ -6,6 +6,7 @@ import statistics
 import hashlib
 from collections import defaultdict
 
+from .media import assess_media
 from .compare import compare_design
 from .contracts import bounded, canonical, check, items, number, shape, text, unique
 from .dna import DIMENSIONS, validate_dna
@@ -15,17 +16,20 @@ BASELINES = {"no_guidance", "profile", "design_md"}
 CONDITIONS = BASELINES | {"profile_and_design_md"}
 
 
-def prepare_roundtrip(reference: dict, brief: str, *, intent: str = "adapt") -> dict:
+def prepare_roundtrip(reference: dict, brief: str, *, intent: str = "adapt", capabilities: dict | None = None) -> dict:
     """Export only derived controlled guidance and a separately supplied brief."""
     validate_dna(reference)
     text(brief)
-    return bounded({"schema_version": "0.1", "brief": brief,
+    result = {"schema_version": "0.1", "brief": brief,
         "design_md": render_design(reference, generation_safe=True, intent=intent),
         "export_policy": export_policy(intent),
         "protocol": {"version": "0.1", "allowed_inputs": ["brief", "design_md"],
             "workspace": "Use a fresh workspace containing only the allowed inputs and neutral tooling.",
             "prohibitions": ["Do not fetch the reference site or original artifacts.",
-                "Do not copy reference logos, branding, text, assets, DOM/CSS, or information architecture."]}})
+                "Do not copy reference logos, branding, text, assets, DOM/CSS, or information architecture."]}}
+    if capabilities is not None:
+        result["media_compatibility"] = assess_media(reference, capabilities, intent=intent, generation_safe=True)
+    return bounded(result)
 
 
 def evaluate_roundtrip(fixture: dict) -> dict:

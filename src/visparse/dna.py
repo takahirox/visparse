@@ -12,7 +12,7 @@ from .design import validate_design_profile
 from .inspection import validate_inspection
 
 DNA_VERSION = "0.1"
-VOCABULARY_VERSION = "0.3"
+VOCABULARY_VERSION = "0.4"
 DIMENSIONS = (
     "typography", "color_strategy", "spacing_geometry", "composition",
     "visual_hierarchy", "component_grammar", "imagery_grammar", "responsive",
@@ -71,6 +71,13 @@ FEATURES.update({
     "color.background_hex": ("color_strategy", "color", None, 0),
     "color.accent_hex": ("color_strategy", "color", None, 0),
 })
+V3_FEATURES = frozenset(FEATURES)
+FEATURES.update({
+    "imagery.prominence": ("imagery_grammar", "enum", ["low", "medium", "high"], 0),
+    "imagery.framing": ("imagery_grammar", "enum", ["close-up", "medium", "wide", "mixed"], 0),
+    "imagery.text_space": ("imagery_grammar", "enum", ["left", "right", "above", "below", "none", "mixed"], 0),
+    "imagery.subject_arrangement": ("imagery_grammar", "enum", ["left", "center", "right", "distributed", "mixed"], 0),
+})
 RANK = {"measured": 0, "observed": 1, "inferred": 2}
 DEFAULT_SCOPE = {"viewport": "unspecified", "state": "default", "subject": "page"}
 
@@ -116,7 +123,7 @@ def validate_value(name: str, value: Any, unit: Any) -> None:
 def validate_dna(dna: Any) -> dict:
     bounded(dna)
     shape(dna, {"schema_version", "vocabulary_version", "sources", "evidence", "features", "principles", "gaps", "provenance"})
-    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", "0.2", VOCABULARY_VERSION},
+    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", "0.2", "0.3", VOCABULARY_VERSION},
           "unsupported DNA schema/vocabulary version")
     sources = unique(dna["sources"])
     for source in sources.values():
@@ -146,6 +153,7 @@ def validate_dna(dna: Any) -> dict:
         check(feature["name"] in FEATURES, "unsupported feature")
         check(dna["vocabulary_version"] != "0.1" or feature["name"] in LEGACY_FEATURES, "feature requires vocabulary 0.2")
         check(dna["vocabulary_version"] != "0.2" or feature["name"] in V2_FEATURES, "feature requires vocabulary 0.3")
+        check(dna["vocabulary_version"] != "0.3" or feature["name"] in V3_FEATURES, "feature requires vocabulary 0.4")
         if feature["name"] == "layout.relative_position":
             text(feature.get("relative_to"))
             check(feature["relative_to"] != feature["scope"]["subject"], "self relationship")
