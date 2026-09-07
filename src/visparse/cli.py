@@ -14,6 +14,7 @@ from .design import CodexDesignAnalyzer, normalize_design_profile
 from .design import load_design_profile
 from .contracts import canonical, load_json
 from .dna import build_dna, load_dna, normalize_dna
+from .semantic import CodexSemanticExtractor, apply_semantics, extract_design
 from .render import render_design
 from .compare import compare_design
 from .analysis_eval import evaluate_analysis
@@ -57,6 +58,9 @@ def _parser() -> argparse.ArgumentParser:
     normalize.add_argument("--inspection", help="collector inspection bundle")
     normalize.add_argument("--annotations", help="explicit inferred feature mappings and transfer policies")
     normalize.add_argument("--contexts", help="namespaced profile source/evidence scope mappings")
+    extract = subparsers.add_parser("design-extract")
+    extract.add_argument("path", help="normalized DNA containing observed evidence")
+    extract.add_argument("--predictions", help="stored semantic predictions; omit to explicitly invoke Codex")
     render = subparsers.add_parser("design-render")
     render.add_argument("path")
     render.add_argument("--mode", choices=["compact", "full"], default="compact")
@@ -92,6 +96,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "design-extract":
+            dna = load_dna(_read_bounded(args.path))
+            result = apply_semantics(dna, load_json(_read_bounded(args.predictions))) if args.predictions else extract_design(dna, CodexSemanticExtractor())
+            sys.stdout.write(normalize_dna(result))
+            return 0
         if args.command == "design-normalize":
             profile = load_design_profile(_read_bounded(args.path)) if args.path else None
             inspection = load_inspection(_read_bounded(args.inspection)) if args.inspection else None

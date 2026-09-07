@@ -11,7 +11,8 @@ from .contracts import bounded, canonical, check, items, number, shape, text, un
 from .dna import DIMENSIONS, validate_dna
 from .render import render_design
 
-CONDITIONS = {"no_guidance", "profile", "design_md"}
+BASELINES = {"no_guidance", "profile", "design_md"}
+CONDITIONS = BASELINES | {"profile_and_design_md"}
 
 
 def prepare_roundtrip(reference: dict, brief: str) -> dict:
@@ -89,7 +90,7 @@ def evaluate_roundtrip(fixture: dict) -> dict:
                     "coverage": [r["comparison"]["dimensions"][dimension]["coverage"] for r in selected]}
             conditions[condition] = {"runs": len(selected), "dimensions": per_dimension}
         summaries.append({"group": key.strip(), "conditions": conditions,
-            "complete_baselines": all(c["runs"] for c in conditions.values()),
+            "complete_baselines": all(conditions[c]["runs"] for c in BASELINES),
             "independent_review_available": any(r["human_review"]["count"] for r in group)})
     return {"schema_version": "0.1", "runs": results, "groups": summaries,
         "limitations": ["Generation is external; input manifests are declarations, not proof of sandbox execution.",
