@@ -350,3 +350,24 @@ review (#8/#9); a nonempty feature list alone does not demonstrate fidelity.
 
 Stored round-trip runs accept `profile_and_design_md` as a separate condition;
 legacy baseline completeness still requires no_guidance/profile/design_md.
+
+### Export intent (render policy 0.2)
+
+`design-render` and `design-export` accept `--intent preserve|adapt`; the API
+`render_design` / `prepare_roundtrip` accepts the same keyword. `adapt` remains the
+backward-compatible default: inferred recommendations are qualified suggestions.
+`preserve` exports supported visual features, suppresses inferred principles that
+could prescribe redesign, and retains attributed explicit caller policy in the
+normal export. Safe exports omit all free-form policy text: supply trusted caller
+constraints in the separate brief. No evidence is rewritten when switching modes.
+
+Caller constraints take precedence over supported observations; recommendations
+never become newly observed facts. Unknowns and conflicts do not become mandatory
+properties. Original content and assets remain distinct from appearance intent.
+`design-export` records `export_policy` (version, intent, precedence); stored
+round-trip configuration may include the same object so modes cannot be pooled
+accidentally. Old runs without policy metadata remain valid.
+
+For comparisons, hold the analysis fixed, record input hashes and policy/prompt
+versions, use multiple fresh generations per intent, and review color, typography,
+geometry and imagery separately. A single improved run is not a causal estimate.

@@ -9,18 +9,19 @@ from collections import defaultdict
 from .compare import compare_design
 from .contracts import bounded, canonical, check, items, number, shape, text, unique
 from .dna import DIMENSIONS, validate_dna
-from .render import render_design
+from .render import render_design, export_policy
 
 BASELINES = {"no_guidance", "profile", "design_md"}
 CONDITIONS = BASELINES | {"profile_and_design_md"}
 
 
-def prepare_roundtrip(reference: dict, brief: str) -> dict:
+def prepare_roundtrip(reference: dict, brief: str, *, intent: str = "adapt") -> dict:
     """Export only derived controlled guidance and a separately supplied brief."""
     validate_dna(reference)
     text(brief)
     return bounded({"schema_version": "0.1", "brief": brief,
-        "design_md": render_design(reference, generation_safe=True),
+        "design_md": render_design(reference, generation_safe=True, intent=intent),
+        "export_policy": export_policy(intent),
         "protocol": {"version": "0.1", "allowed_inputs": ["brief", "design_md"],
             "workspace": "Use a fresh workspace containing only the allowed inputs and neutral tooling.",
             "prohibitions": ["Do not fetch the reference site or original artifacts.",
@@ -47,7 +48,11 @@ def evaluate_roundtrip(fixture: dict) -> dict:
         check(run["condition"] in CONDITIONS, "unknown baseline condition")
         text(run["generator"])
         check(type(run["replicate"]) is int and run["replicate"] >= 1, "replicate must be positive integer")
-        shape(run["configuration"], {"model_version", "prompt_version", "generation_budget", "parameters"})
+        shape(run["configuration"], {"model_version", "prompt_version", "generation_budget", "parameters"}, {"export_policy"})
+        if "export_policy" in run["configuration"]:
+            policy = run["configuration"]["export_policy"]
+            check(isinstance(policy, dict), "invalid export policy")
+            check(policy == export_policy(policy.get("intent")), "invalid export policy")
         text(run["configuration"]["model_version"])
         text(run["configuration"]["prompt_version"])
         text(run["configuration"]["generation_budget"])
