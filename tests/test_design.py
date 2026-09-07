@@ -277,11 +277,57 @@ class DesignProfileTests(unittest.TestCase):
     def test_invalid_analysis_configuration_never_calls_provider(self):
         from unittest.mock import Mock
         for options in ({"intent": []}, {"intent": "guess"}, {"timeout_seconds": True},
+                        {"estimate_geometry": "yes"}, {"estimate_geometry": 1},
                         {"timeout_seconds": 0}, {"timeout_seconds": 901}, {"timeout_seconds": float("nan")}):
             runner = Mock()
             with self.subTest(options=options), self.assertRaises(ValidationError):
                 CodexDesignAnalyzer(runner=runner, **options).analyze([evidence("source")])
             runner.run.assert_not_called()
+
+    def test_geometry_opt_in_keeps_estimates_out_of_measurements(self):
+        source = evidence("source")
+        expected = profile([source]); expected["measurements"] = []
+        runner = FakeRunner(ProcessResult(0, json.dumps(expected), ""))
+        CodexDesignAnalyzer(runner=runner, estimate_geometry=True).analyze([source])
+        prompt = runner.argv[-1]
+        for phrase in ("ONLY in interpretations", "top-left of the complete attached image",
+                       "confidence", "rough error bounds", "cropped or full-page", "measurements must be an empty array"):
+            self.assertIn(phrase, prompt)
+        self.assertNotIn("do not estimate pixel dimensions", prompt)
+        self.assertIn("do not estimate pixel dimensions", CodexDesignAnalyzer._prompt([source], []))
+        runner = FakeRunner(ProcessResult(0, json.dumps(profile([source])), ""))
+        with self.assertRaisesRegex(CodexValidationError, "no trusted mechanical measurement"):
+            CodexDesignAnalyzer(runner=runner, estimate_geometry=True).analyze([source])
+
+    def test_estimated_geometry_retains_inference_and_confidence_through_export(self):
+        from visparse.dna import build_dna
+        from visparse.semantic import apply_semantics
+        from visparse.render import render_design
+        value = profile([evidence("source")]); value["measurements"] = []
+        estimate = value["interpretations"][0]
+        estimate.update(category="layout", statement="Hero left edge: geometry.viewport_x_ratio approximately 0.17.")
+        value["confidence"][0].update(level=0.7, uncertainty="Visible edge, roughly +/-0.02 of image width.")
+        scope = {"subject": "hero", "viewport": "1440x900", "state": "initial"}
+        dna = build_dna(value, contexts={"profile:interpretation-1": scope})
+        item = next(e for e in dna["evidence"] if e["id"] == "profile:interpretation-1")
+        self.assertEqual((item["kind"], item["confidence"]), ("inferred", 0.7))
+        self.assertEqual(item["details"]["confidence_assessment"], value["confidence"][0])
+        feature = dict(name="geometry.viewport_x_ratio", value=0.17, unit="ratio", status="known",
+                       confidence=0.7, scope=scope, evidence_ids=[item["id"]],
+                       method="Extract the supplied estimate without converting coordinates.",
+                       uncertainty=item["details"]["confidence_assessment"]["uncertainty"])
+        prediction = {"schema_version": "0.2", "features": [feature]}
+        result = apply_semantics(dna, prediction)
+        self.assertEqual(result["features"][0]["origin"], "inferred")
+        rendered = render_design(result, intent="preserve")
+        self.assertIn("geometry.viewport_x_ratio: 0.17ratio", rendered)
+        self.assertIn("inferred, confidence=0.70", rendered)
+        self.assertIn("+/-0.02", rendered)
+        feature["confidence"] = 0.8
+        with self.assertRaises(ValidationError):
+            apply_semantics(dna, prediction)
+        feature["confidence"] = 0.5
+        self.assertIn("low_confidence", render_design(apply_semantics(dna, prediction), intent="preserve"))
 
 
 if __name__ == "__main__":
