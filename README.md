@@ -148,3 +148,14 @@ is `partial`. Counts measure extraction coverage, not correctness or export rete
 Empty checklists do not establish completeness. Screenshot instructions now request
 visible line/element counts and region relationships; precise numeric geometry still
 requires a measurement channel and is never invented by the semantic extractor.
+
+### Region boundaries
+
+Extraction prefers existing specific evidence scopes. Page-level observations may
+still ground several separately named regions, but combining distinct named subjects
+into one inferred region or collapsing a named subject to `page` is rejected. A
+single-subject alias is allowed unless it collides with a different existing subject
+in the same viewport/state. Region errors are validation failures, not feature
+conflicts; different regions may legitimately use different emphasis values. Actual
+same-region contradictions remain visible. These checks protect explicit boundaries;
+they cannot verify a model's interpretation of regions described only in prose.
