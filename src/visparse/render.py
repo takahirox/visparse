@@ -60,8 +60,9 @@ def principle_export_status(principle: dict, min_confidence: float, generation_s
 
 
 def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0.6,
-                  generation_safe: bool = False, intent: str = "adapt") -> str:
+                  generation_safe: bool = False, intent: str = "adapt", capabilities: dict | None = None) -> str:
     validate_dna(dna)
+    reference_dna = dna
     policy = export_policy(intent)
     check(mode in {"compact", "full"}, "mode must be compact or full")
     number(min_confidence, 0, 1)
@@ -147,4 +148,9 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
     gaps.extend(f"{d}: no comparable supported features" for d in DIMENSIONS if d not in present)
     if gaps:
         lines.extend(["## Known gaps", "", *["- " + _escape(g) for g in sorted(set(gaps))], ""])
+    if capabilities is not None:
+        # Local import keeps the standalone media checker and renderer acyclic at load time.
+        from .media import render_media_guidance
+        lines.append(render_media_guidance(reference_dna, capabilities, intent=intent,
+            min_confidence=min_confidence, generation_safe=generation_safe))
     return "\n".join(lines)

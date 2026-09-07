@@ -21,7 +21,7 @@ def prepare_roundtrip(reference: dict, brief: str, *, intent: str = "adapt", cap
     validate_dna(reference)
     text(brief)
     result = {"schema_version": "0.1", "brief": brief,
-        "design_md": render_design(reference, generation_safe=True, intent=intent),
+        "design_md": render_design(reference, generation_safe=True, intent=intent, capabilities=capabilities),
         "export_policy": export_policy(intent),
         "protocol": {"version": "0.1", "allowed_inputs": ["brief", "design_md"],
             "workspace": "Use a fresh workspace containing only the allowed inputs and neutral tooling.",

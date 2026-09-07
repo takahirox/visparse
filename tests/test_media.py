@@ -10,6 +10,7 @@ from visparse.media import assess_media, media_requirements, validate_capabiliti
 from visparse.roundtrip import prepare_roundtrip
 from visparse.cli import main
 from visparse.model import ValidationError
+from visparse.render import render_design
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -23,6 +24,67 @@ def caps(value='unavailable'):return {'schema_version':'0.1','kinds':{'photograp
 
 
 class MediaTests(unittest.TestCase):
+    def test_capabilities_reach_allowed_generator_input(self):
+        exported = prepare_roundtrip(photo(), 'Original page', intent='preserve', capabilities=caps())
+        allowed = {key: exported[key] for key in exported['protocol']['allowed_inputs']}
+        self.assertIn('mismatch', allowed['design_md'])
+        self.assertIn('record the replacement', allowed['design_md'])
+        self.assertNotIn('media_compatibility', allowed)
+        self.assertIn('tradeoff', render_design(photo(), capabilities=caps(), intent='adapt'))
+        self.assertNotIn('## Media capabilities', render_design(photo()))
+
+    def test_unknown_guidance_explains_kind_loss_without_inventing_requirement(self):
+        for state, expected in [('low', 'low_confidence'), ('unknown', 'unknown'),
+                                ('conflict', 'conflict'), ('mixed', 'mixed_kind'), ('missing', 'missing')]:
+            dna = photo(); feature = dna['features'][0]
+            if state == 'low': feature['confidence'] = 0
+            if state == 'unknown': feature.update(status='unknown', value=None, confidence=None)
+            if state == 'conflict': dna['features'].append({**copy.deepcopy(feature), 'id': 'different', 'value': 'illustration'})
+            if state == 'mixed': feature['value'] = 'mixed'
+            if state == 'missing': feature.update(name='imagery.prominence', value='high')
+            report = assess_media(dna, caps())
+            row = report['assessment'][0]
+            self.assertEqual(row['status'], 'unknown')
+            self.assertIn(expected, row['findings'][0]['reason_code'])
+            rendered = render_design(dna, capabilities=caps(), generation_safe=True, intent='preserve')
+            self.assertIn('unresolved requirement', rendered)
+            self.assertNotIn('mismatch [', rendered)
+            if state != 'mixed': self.assertIn('kind=undetermined', rendered)
+
+    def test_media_and_feature_roles_match_even_with_other_nonmedia_subjects(self):
+        dna = photo(); e = dna['evidence'][0]
+        dna['evidence'].append({**copy.deepcopy(e), 'id':'extra',
+                               'scope':{**e['scope'], 'subject':'AAA private header'}})
+        dna['features'][0]['method'] = 'SECRET_METHOD'
+        dna['features'][0]['uncertainty'] = 'SECRET_UNCERTAINTY'
+        rendered = render_design(dna, capabilities=caps(), generation_safe=True)
+        report = assess_media(dna, caps(), generation_safe=True)
+        subject = report['requirements'][0]['scope']['subject']
+        self.assertEqual(subject, 'role-2')
+        self.assertGreaterEqual(rendered.count('subject=role-2'), 2)
+        for value in ('SOURCE_BRAND', 'reference.invalid', 'AAA private', 'SECRET_METHOD', 'SECRET_UNCERTAINTY'):
+            self.assertNotIn(value, rendered)
+
+    def test_absent_kind_and_unavailable_declaration_are_not_conflated(self):
+        dna = photo(); dna['features'][0]['value'] = 'absent'
+        rendered = render_design(dna, capabilities=caps())
+        self.assertIn('not_applicable [', rendered)
+        self.assertNotIn('record the replacement', rendered)
+        dna['features'] = []
+        self.assertIn('No typed media characteristics', render_design(dna, capabilities=caps()))
+        self.assertIn('No definite capability declaration', render_design(photo(), capabilities={'schema_version':'0.1','kinds':{}}))
+
+    def test_render_cli_carries_media_limitations(self):
+        with tempfile.TemporaryDirectory() as td:
+            d, c = Path(td)/'dna.json', Path(td)/'caps.json'
+            d.write_text(json.dumps(photo())); c.write_text(json.dumps(caps()))
+            out = io.StringIO()
+            with redirect_stdout(out):
+                code = main(['design-render',str(d),'--intent','preserve','--generation-safe','--capabilities',str(c)])
+            self.assertEqual(code, 0)
+            self.assertIn('mismatch', out.getvalue())
+            self.assertNotIn('SOURCE_BRAND', out.getvalue())
+
     def test_photo_vector_mismatch_and_compatible_is_only_declared(self):
         dna=photo();before=copy.deepcopy(dna)
         result=assess_media(dna,caps())
