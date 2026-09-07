@@ -125,3 +125,50 @@ class SemanticTests(unittest.TestCase):
         self.assertIn('unspecified confidence, not zero', runner.prompt)
         self.assertIn('Only supporting evidence of kind inferred', runner.prompt)
         self.assertIn('genuine inferred confidence of zero', runner.prompt)
+
+    def test_timeout_defaults_overrides_and_invalid_values(self):
+        from unittest.mock import Mock
+        fixture = sample()
+        for timeout in (300, 450, 900, 1):
+            runner = Mock()
+            runner.run.return_value = ProcessResult(0, canonical(fixture['prediction']), '')
+            provider = CodexSemanticExtractor(runner=runner) if timeout == 300 else CodexSemanticExtractor(runner=runner, timeout_seconds=timeout)
+            extract_design(fixture['dna'], provider)
+            self.assertEqual(runner.run.call_args.kwargs['timeout'], timeout)
+            self.assertEqual(runner.run.call_count, 1)
+        for timeout in (0, -1, 901, float('nan'), float('inf'), True):
+            runner = Mock()
+            with self.subTest(timeout=timeout), self.assertRaises(ValidationError):
+                extract_design(fixture['dna'], CodexSemanticExtractor(runner=runner, timeout_seconds=timeout))
+            runner.run.assert_not_called()
+
+    def test_timeout_is_reported_without_retry(self):
+        import subprocess
+        from unittest.mock import Mock
+        from visparse.codex import CodexTimeoutError
+        fixture = sample()
+        runner = Mock()
+        runner.run.side_effect = subprocess.TimeoutExpired('codex', 300)
+        with self.assertRaisesRegex(CodexTimeoutError, '300 seconds; no automatic retry'):
+            extract_design(fixture['dna'], CodexSemanticExtractor(runner=runner))
+        self.assertEqual(runner.run.call_count, 1)
+
+    def test_cli_timeout_is_forwarded_only_for_live_extraction(self):
+        import io, tempfile
+        from contextlib import redirect_stdout
+        from unittest.mock import Mock, patch
+        from visparse.cli import main
+        fixture = sample()
+        with tempfile.TemporaryDirectory() as td:
+            d, p = Path(td)/'dna.json', Path(td)/'prediction.json'
+            d.write_text(canonical(fixture['dna'])); p.write_text(canonical(fixture['prediction']))
+            for options, timeout in [([], 300), (['--timeout-seconds', '450'], 450)]:
+                provider = Mock()
+                provider.extract.return_value = fixture['prediction']
+                with patch('visparse.cli.CodexSemanticExtractor', return_value=provider) as factory, redirect_stdout(io.StringIO()):
+                    self.assertEqual(main(['design-extract', str(d), *options]), 0)
+                factory.assert_called_once_with(timeout_seconds=timeout)
+                provider.extract.assert_called_once()
+            with patch('visparse.cli.CodexSemanticExtractor') as factory, redirect_stdout(io.StringIO()):
+                self.assertEqual(main(['design-extract', str(d), '--predictions', str(p), '--timeout-seconds', '450']), 0)
+            factory.assert_not_called()

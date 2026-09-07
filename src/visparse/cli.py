@@ -14,7 +14,7 @@ from .design import CodexDesignAnalyzer, normalize_design_profile
 from .design import load_design_profile
 from .contracts import canonical, load_json
 from .dna import build_dna, load_dna, normalize_dna
-from .semantic import CodexSemanticExtractor, apply_semantics, extract_design
+from .semantic import DEFAULT_EXTRACTION_TIMEOUT, CodexSemanticExtractor, apply_semantics, extract_design
 from .media import assess_media
 from .coverage import audit_coverage
 from .trace import trace_guidance
@@ -80,6 +80,8 @@ def _parser() -> argparse.ArgumentParser:
     extract = subparsers.add_parser("design-extract")
     extract.add_argument("path", help="normalized DNA containing observed evidence")
     extract.add_argument("--predictions", help="stored semantic predictions; omit to explicitly invoke Codex")
+    extract.add_argument("--timeout-seconds", type=float, default=DEFAULT_EXTRACTION_TIMEOUT,
+                         help="live extraction timeout, 1–900 seconds (default: 300); ignored with --predictions")
     render = subparsers.add_parser("design-render")
     render.add_argument("path")
     render.add_argument("--mode", choices=["compact", "full"], default="compact")
@@ -137,7 +139,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "design-extract":
             dna = load_dna(_read_bounded(args.path))
-            result = apply_semantics(dna, load_json(_read_bounded(args.predictions))) if args.predictions else extract_design(dna, CodexSemanticExtractor())
+            result = apply_semantics(dna, load_json(_read_bounded(args.predictions))) if args.predictions else extract_design(
+                dna, CodexSemanticExtractor(timeout_seconds=args.timeout_seconds))
             sys.stdout.write(normalize_dna(result))
             return 0
         if args.command == "design-normalize":
