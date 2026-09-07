@@ -26,6 +26,7 @@ from .codex import (
     _json_object,
 )
 from .model import MAX_DEPTH, MAX_INPUT_BYTES, MAX_ITEMS, MAX_STRING_LENGTH, SourceEvidence, ValidationError
+from .contracts import check, number
 
 DESIGN_SCHEMA_VERSION = "0.1"
 DESIGN_CATEGORIES = frozenset({
@@ -354,13 +355,16 @@ class CodexDesignAnalyzer(DesignAnalyzer):
 
     runner: ProcessRunner = field(default_factory=SubprocessRunner)
     executable: str = "codex"
-    timeout_seconds: float = 180.0
+    timeout_seconds: float = 300.0
+    intent: str = "adapt"
 
     def analyze(
         self,
         references: Sequence[SourceEvidence],
         targets: Sequence[SourceEvidence] = (),
     ) -> dict[str, Any]:
+        check(self.intent in ("preserve", "adapt"), "intent must be preserve or adapt")
+        number(self.timeout_seconds, 1, 900)
         if not references:
             raise ValidationError("at least one reference screenshot is required")
         supplied = list(references) + list(targets)
@@ -371,7 +375,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
                     os.chmod(image.name, 0o600)
                     image.write(evidence.payload)
                     paths.append(image.name)
-            result = self.runner.run(self._argv(paths, self._prompt(references, targets)), timeout=self.timeout_seconds)
+            result = self.runner.run(self._argv(paths, self._prompt(references, targets, intent=self.intent)), timeout=self.timeout_seconds)
         except FileNotFoundError:
             raise CodexUnavailableError("codex executable is unavailable; install Codex CLI or configure executable") from None
         except subprocess.TimeoutExpired:
@@ -401,11 +405,27 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         return [
             self.executable, "exec", "--ephemeral", "--sandbox", "read-only",
             "--skip-git-repo-check", "--ignore-user-config", "--ignore-rules",
+            "--disable", "apps", "--disable", "plugins", "--disable", "memories",
+            "-c", "memories.use_memories=false", "-c", "memories.generate_memories=false",
+            "-c", "project_doc_max_bytes=0", "-c", 'web_search="disabled"',
             "--image", *image_paths, "--", prompt,
         ]
 
     @staticmethod
-    def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence]) -> str:
+    def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence], *, intent: str = "adapt") -> str:
+        check(intent in ("preserve", "adapt"), "intent must be preserve or adapt")
+        preservation = (
+            "Analysis intent: preserve. Supply a reconstruction inventory of what is visible, including small "
+            "identity/name/level labels, floating controls and overlays; do not omit them because they seem secondary. "
+            "Use stable neutral region names in statements and distinguish repeated instances from distinct types. "
+            "For each identifiable region describe its location relative to neighbors, visual size relative to them, "
+            "alignment, spacing, text treatment and dominant color appearance (including light/dark and hue differences). "
+            "Explicitly count visible repeated controls and headline lines when unambiguous. Preserve placements of "
+            "labels relative to their subjects. Say which regions are partly cropped or obscured. "
+            "Do not identify the source website or transcribe its branding, usernames or slogans; describe their "
+            "visual roles and line structure instead. Recommendations must not erase observed complexity or "
+            "silently repair perceived weaknesses. Missing dimensions stay unknown. "
+        ) if intent == "preserve" else "Analysis intent: adapt. "
         identities = [
             {
                 "id": item.id,
@@ -418,6 +438,9 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         source_ids = [item["id"] for item in identities]
         return (
             "Analyze the attached screenshots as one Visparse design profile. Return exactly one JSON object and no Markdown. "
+            "Use only the supplied images; do not browse, use tools, inspect unrelated files or consult memories. "
+            "Never reset usage limits, purchase allowance or switch models/providers; stop on a limit. "
+            + preservation +
             f"schema_version must be {DESIGN_SCHEMA_VERSION!r}; sources must exactly equal {json.dumps(identities, ensure_ascii=False)}. "
             "Top-level keys must be schema_version, sources, measurements, observations, interpretations, confidence, principles, recommendations, provenance. "
             f"Observation and interpretation category must be one of {json.dumps(sorted(DESIGN_CATEGORIES))}. "
