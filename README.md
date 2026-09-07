@@ -159,3 +159,22 @@ in the same viewport/state. Region errors are validation failures, not feature
 conflicts; different regions may legitimately use different emphasis values. Actual
 same-region contradictions remain visible. These checks protect explicit boundaries;
 they cannot verify a model's interpretation of regions described only in prose.
+
+### Guidance retention trace
+
+`visparse design-trace dna.json --intent preserve --generation-safe` explains the
+renderer selection at the same confidence threshold. It reports raw feature counts,
+feature-group counts, retained/excluded groups, per-feature status/confidence, direct
+and ancestral evidence IDs, source IDs, and exclusion reasons. It also traces
+principle filtering. `--generation-safe` selects the target renderer behavior; the
+**trace itself is diagnostic and still contains original IDs and scopes**. Do not
+provide it as a sanitized generator input.
+
+Supporting-evidence metadata is followed without interpreting source prose. Missing,
+malformed or cyclic links are reported rather than repaired. Evidence outside feature
+lineage is listed separately; observations and policies need not yield features.
+Grouping precedes safe-label projection so redaction cannot manufacture conflicts.
+Coverage and retention are separate: a supported free-text feature can be covered but
+filtered from safe guidance. Neither establishes visual fidelity.
+Distinct nonstandard states and viewports receive distinct neutral labels, rather than
+being collapsed into one unspecified label. Original labels do not leave safe guidance.

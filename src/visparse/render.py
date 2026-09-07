@@ -8,6 +8,7 @@ import copy
 
 from .contracts import check, number
 from .dna import DIMENSIONS, FEATURES, feature_groups, group_status, validate_dna
+from .safe_scope import scope_labels, safe_scope, safe_subject
 
 RENDER_POLICY_VERSION = "0.2"
 INTENTS = {"preserve", "adapt"}
@@ -39,6 +40,25 @@ def _scope(scope: dict) -> str:
     return ", ".join(f"{k}={_escape(v)}" for k, v in scope.items())
 
 
+def feature_export_status(group: list[dict], min_confidence: float, generation_safe: bool) -> str:
+    status = group_status(group, min_confidence)
+    if status != 'known':
+        return status
+    if generation_safe and FEATURES[group[0]['name']][1] == 'text':
+        return 'free_text_filtered'
+    return 'retained'
+
+
+def principle_export_status(principle: dict, min_confidence: float, generation_safe: bool, intent: str) -> str:
+    if generation_safe:
+        return 'free_text_filtered'
+    if intent == 'preserve' and principle['basis'] != 'explicit_policy':
+        return 'adaptation_filtered'
+    if principle['confidence'] is None:
+        return 'unknown_confidence'
+    return 'low_confidence' if principle['confidence'] < min_confidence else 'retained'
+
+
 def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0.6,
                   generation_safe: bool = False, intent: str = "adapt") -> str:
     validate_dna(dna)
@@ -47,20 +67,16 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
     number(min_confidence, 0, 1)
     if generation_safe:
         dna = copy.deepcopy(dna)
+    # Group before redaction: distinct original states/viewports may share safe labels.
+    groups = feature_groups(dna)
+    if generation_safe:
         # Free-form scope labels can themselves contain source URLs or branding.
         # Alias subjects and constrain viewport/state strings in the export.
-        subjects = {s: f"role-{i}" for i, s in enumerate(sorted({e["scope"]["subject"] for e in dna["evidence"]} | {f["scope"]["subject"] for f in dna["features"]}), 1)}
+        labels = scope_labels(dna)
         for feature in dna["features"]:
             if "relative_to" in feature:
-                target = feature["relative_to"]
-                feature["relative_to"] = target if target == "page" or re.fullmatch(r"visible-sample:tag=[a-z][a-z0-9]*", target) else subjects[target]
-            scope = feature["scope"]
-            if not re.fullmatch(r"(?:page|visible-sample:tag=[a-z][a-z0-9]*)", scope["subject"]):
-                scope["subject"] = subjects[scope["subject"]]
-            if not re.fullmatch(r"[0-9]{1,4}x[0-9]{1,4}", scope["viewport"]):
-                scope["viewport"] = "unspecified"
-            if scope["state"] not in {"default", "hover", "focus", "active", "disabled"}:
-                scope["state"] = "supplied-state"
+                feature["relative_to"] = safe_subject(feature["relative_to"], labels)
+            feature['scope'] = safe_scope(feature['scope'], labels)
     lines = ["# Design guidance", "", f"Rendering policy: {RENDER_POLICY_VERSION}.", "",
              "Apply these design principles to the new product brief. Preserve its own content, branding, assets, and information architecture.", "",
              "SHOULD expresses transfer guidance, not proof of a universal source rule. Scope and uncertainty qualify every recommendation.", ""]
@@ -73,7 +89,6 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
             "Missing or uncertain properties are not requirements.")
     else:
         lines.append("Recommendations describe possible adaptations, not verified defects or new observations.")
-    groups = feature_groups(dna)
     gaps = []
     for dimension in DIMENSIONS:
         rules = []
@@ -82,14 +97,11 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
             feature = group[0]
             if FEATURES[feature["name"]][0] != dimension:
                 continue
-            status = group_status(group, min_confidence)
-            if status != "known":
+            status = feature_export_status(group, min_confidence, generation_safe)
+            if status != "retained":
                 gaps.append(f"{feature['name']} ({_scope(feature['scope'])}): {status}")
                 continue
             name, value = feature["name"], feature["value"]
-            if generation_safe and FEATURES[name][1] == "text":
-                gaps.append(f"{name}: free-text value omitted from generation export")
-                continue
             if intent == "preserve":
                 wording = f"Preserve the supported {name}: {_escape(str(value))}{feature['unit'] or ''}, within the supplied scope and uncertainty."
             elif name in TEMPLATES:
@@ -117,10 +129,10 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
     if not generation_safe:
         principles = []
         for principle in dna["principles"]:
-            if intent == "preserve" and principle["basis"] != "explicit_policy":
-                continue
-            if principle["confidence"] is None or principle["confidence"] < min_confidence:
-                gaps.append(f"Principle {principle['id']}: " + ("unknown_confidence" if principle["confidence"] is None else "low_confidence"))
+            status = principle_export_status(principle, min_confidence, generation_safe, intent)
+            if status != 'retained':
+                if status != 'adaptation_filtered':
+                    gaps.append(f"Principle {principle['id']}: {status}")
                 continue
             principles.append(f"- {principle['strength']}: {_escape(principle['statement'])} [basis={principle['basis']}; confidence={principle['confidence']:.2f}; {_scope(principle['scope'])}]")
             if mode == "full":
@@ -130,7 +142,8 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
         gaps.extend(dna["gaps"])
     else:
         lines.extend(["Free-text principles, evidence IDs, provenance, and raw source locators are omitted from this generation export.", ""])
-    present = {FEATURES[g[0]["name"]][0] for g in groups.values() if group_status(g, min_confidence) == "known"}
+    present = {FEATURES[g[0]["name"]][0] for g in groups.values()
+               if feature_export_status(g, min_confidence, generation_safe) == "retained"}
     gaps.extend(f"{d}: no comparable supported features" for d in DIMENSIONS if d not in present)
     if gaps:
         lines.extend(["## Known gaps", "", *["- " + _escape(g) for g in sorted(set(gaps))], ""])
