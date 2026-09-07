@@ -49,8 +49,11 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
         dna = copy.deepcopy(dna)
         # Free-form scope labels can themselves contain source URLs or branding.
         # Alias subjects and constrain viewport/state strings in the export.
-        subjects = {s: f"role-{i}" for i, s in enumerate(sorted({f["scope"]["subject"] for f in dna["features"]}), 1)}
+        subjects = {s: f"role-{i}" for i, s in enumerate(sorted({e["scope"]["subject"] for e in dna["evidence"]} | {f["scope"]["subject"] for f in dna["features"]}), 1)}
         for feature in dna["features"]:
+            if "relative_to" in feature:
+                target = feature["relative_to"]
+                feature["relative_to"] = target if target == "page" or re.fullmatch(r"visible-sample:tag=[a-z][a-z0-9]*", target) else subjects[target]
             scope = feature["scope"]
             if not re.fullmatch(r"(?:page|visible-sample:tag=[a-z][a-z0-9]*)", scope["subject"]):
                 scope["subject"] = subjects[scope["subject"]]
@@ -99,6 +102,8 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
                     wording = f"Use {name} around {value:.4g}{unit} as a starting point for the corresponding role."
             else:
                 wording = f"Preserve the {name} tendency: {_escape(str(value))}."
+            if "relative_to" in feature:
+                wording += f" Relative to {_escape(feature['relative_to'])}."
             origin = "inferred" if any(f["origin"] == "inferred" for f in group) else feature["origin"]
             levels = [f["confidence"] for f in group if f["confidence"] is not None]
             qualifier = f"{origin}" + (f", confidence={min(levels):.2f}" if levels else "")

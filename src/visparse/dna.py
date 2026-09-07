@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import re
 from collections import defaultdict
 from typing import Any
 
@@ -11,7 +12,7 @@ from .design import validate_design_profile
 from .inspection import validate_inspection
 
 DNA_VERSION = "0.1"
-VOCABULARY_VERSION = "0.2"
+VOCABULARY_VERSION = "0.3"
 DIMENSIONS = (
     "typography", "color_strategy", "spacing_geometry", "composition",
     "visual_hierarchy", "component_grammar", "imagery_grammar", "responsive",
@@ -53,6 +54,23 @@ FEATURES.update({
     "color.family": ("color_strategy", "enum", ["white", "black", "gray", "blue", "lavender", "purple", "red", "orange", "yellow", "green", "cyan", "brown", "mixed"], 0),
     "color.saturation": ("color_strategy", "enum", ["muted", "moderate", "vivid", "mixed"], 0),
 })
+V2_FEATURES = frozenset(FEATURES)
+FEATURES.update({
+    "typography.line_count": ("typography", "count", None, 0),
+    "typography.width_style": ("typography", "enum", ["condensed", "normal", "wide"], 0),
+    "layout.relative_position": ("composition", "enum", ["above", "below", "left-of", "right-of", "aligned-left", "aligned-right", "aligned-center", "contains", "overlaps"], 0),
+    "geometry.width_mode": ("spacing_geometry", "enum", ["fill-parent", "intrinsic", "fixed", "proportional"], 0),
+    "geometry.viewport_width_ratio": ("spacing_geometry", "ratio", None, 0.02),
+    "geometry.viewport_height_ratio": ("spacing_geometry", "ratio", None, 0.02),
+    "geometry.viewport_x_ratio": ("spacing_geometry", "ratio", None, 0.02),
+    "geometry.viewport_y_ratio": ("spacing_geometry", "ratio", None, 0.02),
+    "image.width": ("spacing_geometry", "image-px", None, 2),
+    "image.height": ("spacing_geometry", "image-px", None, 2),
+    "component.visible_count": ("component_grammar", "count", None, 0),
+    "color.foreground_hex": ("color_strategy", "color", None, 0),
+    "color.background_hex": ("color_strategy", "color", None, 0),
+    "color.accent_hex": ("color_strategy", "color", None, 0),
+})
 RANK = {"measured": 0, "observed": 1, "inferred": 2}
 DEFAULT_SCOPE = {"viewport": "unspecified", "state": "default", "subject": "page"}
 
@@ -65,21 +83,32 @@ def validate_scope(scope: Any) -> dict:
 
 
 def feature_key(feature: dict) -> str:
-    return canonical([feature["name"], feature["scope"]]).strip()
+    parts = [feature["name"], feature["scope"]]
+    if "relative_to" in feature:
+        relation = feature["value"]
+        axis = {"above": "vertical", "below": "vertical", "left-of": "horizontal", "right-of": "horizontal"}.get(relation, relation)
+        parts.extend([feature["relative_to"], axis])
+    return canonical(parts).strip()
 
 
 def validate_value(name: str, value: Any, unit: Any) -> None:
     check(name in FEATURES, f"unsupported feature: {name}")
     _, kind, choices, _ = FEATURES[name]
-    expected_unit = None if kind in {"text", "enum", "number"} else kind
+    expected_unit = None if kind in {"text", "enum", "number", "color", "count"} else kind
     check(unit == expected_unit, f"{name}: expected unit {expected_unit}")
-    if kind in {"enum", "text"}:
+    if kind == "color":
+        check(isinstance(value, str) and re.fullmatch(r"#[0-9a-f]{6}", value) is not None, "expected lowercase six-digit hex color")
+    elif kind in {"enum", "text"}:
         text(value)
         check(choices is None or value in choices, f"{name}: unsupported category")
     else:
         number(value)
         if name != "typography.letter_spacing":
             check(value >= 0, f"{name}: negative value")
+        if kind == "count":
+            check(type(value) is int and value >= 1, "expected positive integer count")
+        if name.startswith("geometry.viewport_"):
+            check(value <= 1, "expected viewport fraction")
         if name in {"surface.shadow_usage", "surface.border_usage"}:
             check(value <= 1, f"{name}: expected fraction")
 
@@ -87,7 +116,7 @@ def validate_value(name: str, value: Any, unit: Any) -> None:
 def validate_dna(dna: Any) -> dict:
     bounded(dna)
     shape(dna, {"schema_version", "vocabulary_version", "sources", "evidence", "features", "principles", "gaps", "provenance"})
-    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", VOCABULARY_VERSION},
+    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", "0.2", VOCABULARY_VERSION},
           "unsupported DNA schema/vocabulary version")
     sources = unique(dna["sources"])
     for source in sources.values():
@@ -112,9 +141,17 @@ def validate_dna(dna: Any) -> dict:
     all_ids = list(sources) + list(evidence) + list(features) + list(principles)
     check(len(set(all_ids)) == len(all_ids), "IDs must be globally unique")
     for feature in features.values():
-        shape(feature, {"id", "name", "value", "unit", "status", "origin", "confidence", "scope", "evidence_ids", "method"}, {"uncertainty"})
+        shape(feature, {"id", "name", "value", "unit", "status", "origin", "confidence", "scope", "evidence_ids", "method"}, {"uncertainty", "relative_to"})
+        validate_scope(feature["scope"])
         check(feature["name"] in FEATURES, "unsupported feature")
         check(dna["vocabulary_version"] != "0.1" or feature["name"] in LEGACY_FEATURES, "feature requires vocabulary 0.2")
+        check(dna["vocabulary_version"] != "0.2" or feature["name"] in V2_FEATURES, "feature requires vocabulary 0.3")
+        if feature["name"] == "layout.relative_position":
+            text(feature.get("relative_to"))
+            check(feature["relative_to"] != feature["scope"]["subject"], "self relationship")
+            check(any(e["scope"] == {**feature["scope"], "subject": feature["relative_to"]} for e in evidence.values()), "relationship target missing in same viewport/state")
+        else:
+            check("relative_to" not in feature, "relative_to requires relationship feature")
         if "uncertainty" in feature:
             text(feature["uncertainty"])
         check(feature["status"] in {"known", "unknown", "not_applicable"}, "invalid feature status")
@@ -133,12 +170,12 @@ def validate_dna(dna: Any) -> dict:
                 check(feature["confidence"] <= evidence[ref]["confidence"], "feature confidence exceeds supporting inference")
         if feature["status"] == "known":
             validate_value(feature["name"], feature["value"], feature["unit"])
-            if feature["origin"] == "measured":
+            if feature["origin"] == "measured" and FEATURES[feature["name"]][1] != "color":
                 number(feature["value"])
         else:
             check(feature["value"] is None, "unknown/not-applicable value must be null")
             spec = FEATURES[feature["name"]]
-            validate_value(feature["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else 0), feature["unit"])
+            validate_value(feature["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" else 0), feature["unit"])
     for principle in principles.values():
         shape(principle, {"id", "statement", "evidence_ids", "confidence", "strength", "scope", "basis"})
         text(principle["statement"])

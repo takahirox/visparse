@@ -371,3 +371,40 @@ accidentally. Old runs without policy metadata remain valid.
 For comparisons, hold the analysis fixed, record input hashes and policy/prompt
 versions, use multiple fresh generations per intent, and review color, typography,
 geometry and imagery separately. A single improved run is not a causal estimate.
+
+### Region-aware features (vocabulary 0.3, semantic predictions 0.2)
+
+The extractor can now declare `regions` alongside `features`. A region contains
+`id,viewport,state,evidence_ids,confidence,method,uncertainty`; its ID is a neutral
+lowercase role identifier. It creates `region:<id>` inferred evidence, retaining
+original supporting IDs and source provenance. Its viewport/state must match every
+anchor; mobile evidence cannot be invented from desktop. Features cite that new
+ID and use the region ID as their scope subject. Confidence cannot exceed support.
+Legacy 0.1 predictions and DNA vocabularies 0.1/0.2 remain readable.
+
+Vocabulary 0.3 adds visible line/repetition counts, condensed/normal/wide type,
+parent-fill width, viewport-relative x/y/width/height fractions (0..1), and explicit
+`image.width`/`image.height` in `image-px`. Existing collector `geometry.width` and
+`geometry.height` in `px` remain CSS geometry; image pixels are never converted to
+CSS pixels implicitly. Pixel measurements supplied by a trusted image pipeline
+must retain measured evidence and sampling method; VLM predictions remain inferred.
+The built-in semantic extractor does not itself sample pixels or infer exact colors
+from words like blue. The existing browser collector remains an optional source of
+measured geometry; no URL access is necessary for screenshot-only estimates.
+
+`layout.relative_position` additionally requires `relative_to`: a subject with
+evidence in the same viewport/state. Relations participate in comparison keys and
+safe-export role aliases, so distinct anchors do not collapse into conflicts.
+`color.foreground_hex`, `color.background_hex`, and `color.accent_hex` require
+canonical six-digit lowercase hex; they survive safe export. Colors compare exact
+values, not perceptual similarity. Unknown colors remain null. Visible counts are
+positive integers; units are null. Color unit is also null. Ratios retain `ratio`.
+
+See `semantic-spatial.json` for a two-line headline, common left alignment, a subject
+relationship, a full-parent button and scoped palette data. Measurements and
+inferences are independently comparable with tolerances and coverage; absence is
+not agreement. New source/measurement vocabulary is additive and version-gated.
+
+Evaluate target-bearing relationships with `design-compare`; the scalar expected-
+claim format in `eval-analysis` rejects relationship claims rather than silently
+ignoring the target. Other new scalar/color/count features work in both evaluators.
