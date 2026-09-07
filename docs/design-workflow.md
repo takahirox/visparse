@@ -313,3 +313,40 @@ This version completes the provider-neutral schema, static collector, renderer,
 and stored evaluation workflows. Rich interaction capture, automatic free-text
 semantic extraction, provider-specific live orchestration, and expanded real-world
 expert datasets remain optional external/future extensions of these contracts.
+
+### Explicit semantic extraction (vocabulary 0.2)
+
+Screenshot prose remains evidence, not automatic mechanical features. To extract
+supported features without hand-writing annotations, explicitly invoke:
+
+```sh
+visparse design-normalize profile.json --contexts contexts.json > base-dna.json
+visparse design-extract base-dna.json > enriched-dna.json
+visparse design-render enriched-dna.json --generation-safe > DESIGN.md
+```
+
+Only `design-extract` without `--predictions` invokes the authenticated Codex CLI.
+`design-extract base-dna.json --predictions predictions.json` validates a stored,
+provider-neutral prediction offline. API callers can implement `SemanticExtractor`
+and use `extract_design`, or use deterministic `apply_semantics`. Output features
+are always inferred, carry uncertainty/method/evidence/scope, and cannot exceed
+supporting inference confidence. Scopes come from evidence; optional contexts can
+identify known regions. Unknown and conflicting values are retained, not filled in.
+No retries, purchases, or provider switches are performed after a provider error.
+
+Predictions have `schema_version: "0.1"` and `features`; each feature contains
+`name,value,unit,status,confidence,scope,evidence_ids,method,uncertainty`. Examples
+`semantic-lobby.json` and `semantic-corporate.json` contain synthetic base DNA and
+stored predictions. No policy constraints or measured origins are accepted.
+
+Vocabulary 0.2 adds controlled text-treatment, color-family and saturation fields.
+Existing 0.1 DNA remains readable; enriched/new normalization output uses 0.2.
+Generation-safe exports retain controlled features but omit arbitrary free text,
+source labels and evidence IDs. Unsupported dimensions remain explicit gaps.
+
+Evaluate raw-profile, DESIGN.md-only and combined-input runs separately. Preserve
+input hashes, prompt versions, repetitions, coverage, and independent per-dimension
+review (#8/#9); a nonempty feature list alone does not demonstrate fidelity.
+
+Stored round-trip runs accept `profile_and_design_md` as a separate condition;
+legacy baseline completeness still requires no_guidance/profile/design_md.

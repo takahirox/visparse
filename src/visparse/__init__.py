@@ -56,3 +56,7 @@ __all__ = [
     "summarize_inspection", "summarize_record", "validate_design_profile",
     "validate_inspection", "validate_record",
 ]
+
+from .semantic import SemanticExtractor, CodexSemanticExtractor, apply_semantics, extract_design
+
+__all__ += ["SemanticExtractor", "CodexSemanticExtractor", "apply_semantics", "extract_design"]

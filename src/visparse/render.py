@@ -83,6 +83,8 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
             levels = [f["confidence"] for f in group if f["confidence"] is not None]
             qualifier = f"{origin}" + (f", confidence={min(levels):.2f}" if levels else "")
             rules.append(f"- SHOULD: {wording} [{qualifier}; {_scope(feature['scope'])}]")
+            if not generation_safe and "uncertainty" in feature:
+                rules.append(f"  Uncertainty: {_escape(feature['uncertainty'])}")
             if mode == "full" and not generation_safe:
                 rules.append(f"  Evidence: {_escape(', '.join(sorted({e for f in group for e in f['evidence_ids']})))}. Method: {_escape(feature['method'])}.")
         if rules:

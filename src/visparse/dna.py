@@ -11,7 +11,7 @@ from .design import validate_design_profile
 from .inspection import validate_inspection
 
 DNA_VERSION = "0.1"
-VOCABULARY_VERSION = "0.1"
+VOCABULARY_VERSION = "0.2"
 DIMENSIONS = (
     "typography", "color_strategy", "spacing_geometry", "composition",
     "visual_hierarchy", "component_grammar", "imagery_grammar", "responsive",
@@ -47,6 +47,12 @@ FEATURES = {
     "character.tone": ("semantic_character", "enum", ["restrained", "expressive", "editorial", "utilitarian", "technical", "calm", "bold"], 0),
     "motion.preference": ("motion", "enum", ["none-observed", "subtle", "expressive"], 0),
 }
+LEGACY_FEATURES = frozenset(FEATURES)
+FEATURES.update({
+    "typography.text_treatment": ("typography", "enum", ["plain", "outline", "shadow", "outline-and-shadow"], 0),
+    "color.family": ("color_strategy", "enum", ["white", "black", "gray", "blue", "lavender", "purple", "red", "orange", "yellow", "green", "cyan", "brown", "mixed"], 0),
+    "color.saturation": ("color_strategy", "enum", ["muted", "moderate", "vivid", "mixed"], 0),
+})
 RANK = {"measured": 0, "observed": 1, "inferred": 2}
 DEFAULT_SCOPE = {"viewport": "unspecified", "state": "default", "subject": "page"}
 
@@ -81,7 +87,7 @@ def validate_value(name: str, value: Any, unit: Any) -> None:
 def validate_dna(dna: Any) -> dict:
     bounded(dna)
     shape(dna, {"schema_version", "vocabulary_version", "sources", "evidence", "features", "principles", "gaps", "provenance"})
-    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] == VOCABULARY_VERSION,
+    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", VOCABULARY_VERSION},
           "unsupported DNA schema/vocabulary version")
     sources = unique(dna["sources"])
     for source in sources.values():
@@ -106,8 +112,11 @@ def validate_dna(dna: Any) -> dict:
     all_ids = list(sources) + list(evidence) + list(features) + list(principles)
     check(len(set(all_ids)) == len(all_ids), "IDs must be globally unique")
     for feature in features.values():
-        shape(feature, {"id", "name", "value", "unit", "status", "origin", "confidence", "scope", "evidence_ids", "method"})
+        shape(feature, {"id", "name", "value", "unit", "status", "origin", "confidence", "scope", "evidence_ids", "method"}, {"uncertainty"})
         check(feature["name"] in FEATURES, "unsupported feature")
+        check(dna["vocabulary_version"] != "0.1" or feature["name"] in LEGACY_FEATURES, "feature requires vocabulary 0.2")
+        if "uncertainty" in feature:
+            text(feature["uncertainty"])
         check(feature["status"] in {"known", "unknown", "not_applicable"}, "invalid feature status")
         check(feature["origin"] in RANK, "invalid feature origin")
         text(feature["method"])

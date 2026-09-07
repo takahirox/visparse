@@ -1,0 +1,63 @@
+{
+  "dna": {
+    "schema_version": "0.1",
+    "vocabulary_version": "0.1",
+    "sources": [
+      {
+        "id": "source",
+        "kind": "screenshot",
+        "locator": "https://reference.invalid",
+        "role": "reference"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "observation",
+        "source_ids": [
+          "source"
+        ],
+        "kind": "observed",
+        "statement": "The hero is a photograph of an outdoor meal.",
+        "confidence": null,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "SOURCE_BRAND hero"
+        },
+        "details": {}
+      }
+    ],
+    "features": [],
+    "principles": [],
+    "gaps": [],
+    "provenance": {
+      "created_by": "synthetic fixture",
+      "inputs": [
+        "source"
+      ]
+    }
+  },
+  "prediction": {
+    "schema_version": "0.1",
+    "features": [
+      {
+        "name": "imagery.kind",
+        "value": "photography",
+        "unit": null,
+        "status": "known",
+        "confidence": 0.9,
+        "scope": {
+          "viewport": "1440x900",
+          "state": "default",
+          "subject": "SOURCE_BRAND hero"
+        },
+        "evidence_ids": [
+          "observation"
+        ],
+        "method": "stored synthetic extraction",
+        "uncertainty": "Only the supplied desktop region is described."
+      }
+    ]
+  },
+  "expected": "photography"
+}
