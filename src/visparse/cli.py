@@ -17,6 +17,7 @@ from .dna import build_dna, load_dna, normalize_dna
 from .semantic import CodexSemanticExtractor, apply_semantics, extract_design
 from .media import assess_media
 from .coverage import audit_coverage
+from .trace import trace_guidance
 from .render import render_design
 from .compare import compare_design
 from .analysis_eval import evaluate_analysis
@@ -55,6 +56,11 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    trace = subparsers.add_parser("design-trace")
+    trace.add_argument("path", help="DNA to trace into generation guidance")
+    trace.add_argument("--min-confidence", type=float, default=0.6)
+    trace.add_argument("--generation-safe", action="store_true", help="trace safe-export decisions; diagnostic output retains IDs")
+    trace.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
     coverage = subparsers.add_parser("design-coverage")
     coverage.add_argument("path", help="DNA to audit")
     coverage.add_argument("--expectations", required=True, help="scoped evidence availability declarations")
@@ -112,6 +118,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "design-trace":
+            result = trace_guidance(load_dna(_read_bounded(args.path)), min_confidence=args.min_confidence,
+                generation_safe=args.generation_safe, intent=args.intent)
+            sys.stdout.write(canonical(result))
+            return 0
         if args.command == "design-coverage":
             result = audit_coverage(load_dna(_read_bounded(args.path)),
                 load_json(_read_bounded(args.expectations)), min_confidence=args.min_confidence)
