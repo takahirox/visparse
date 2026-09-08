@@ -78,3 +78,6 @@ class BrowserIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+# Keep optional interaction fixtures in the existing browser CI entry point.
+from interaction_collector_tests import PlanTests, SequenceBrowserTests

@@ -1,0 +1,15 @@
+<!doctype html><html><meta charset="utf-8"><title>Controlled source fixture</title>
+<style>body{font:18px sans-serif;background:#edf3ff}dialog{border:2px solid navy}#status{min-height:2em}</style>
+<button id="open">Open details</button><dialog id="dialog"><button id="close">Close</button><p>Details</p></dialog>
+<form id="form"><label>Email <input id="email" type="email" required></label><button id="submit">Submit</button><button id="cancel" type="button">Cancel</button></form>
+<button id="save">Save item</button><button id="noop">No change</button><button id="delayed">Load</button><a id="escape" href="/outside">Outside scope</a>
+<p id="status" role="status"></p><div style="height:1000px">Scrollable content</div>
+<script>
+const $=id=>document.getElementById(id); const status=$('status');
+$('open').onclick=()=>$('dialog').showModal(); $('close').onclick=()=>$('dialog').close();
+$('form').onsubmit=e=>{e.preventDefault();status.textContent='Submitted'};
+$('cancel').onclick=()=>{$('form').reset();status.textContent='Cancelled'};
+const saved=()=>{$('save').setAttribute('aria-pressed',String(localStorage.getItem('saved')==='yes'));$('save').textContent=localStorage.getItem('saved')==='yes'?'Remove saved item':'Save item'};
+$('save').onclick=()=>{localStorage.getItem('saved')==='yes'?localStorage.removeItem('saved'):localStorage.setItem('saved','yes');saved()};saved();
+$('delayed').onclick=()=>{status.textContent='Loading';setTimeout(()=>status.textContent='Loaded',500)};
+</script></html>

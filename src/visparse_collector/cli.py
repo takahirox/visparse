@@ -3,7 +3,9 @@
 import argparse
 import sys
 
-from visparse.contracts import canonical
+from visparse.contracts import canonical, load_json
+from visparse.model import MAX_INPUT_BYTES
+from .sequence import capture_sequence
 from .browser import CaptureOptions, capture
 
 
@@ -19,8 +21,16 @@ def main(argv=None):
     command.add_argument("--max-scan", type=int, default=5000)
     command.add_argument("--wait-until", default="load", choices=["load", "domcontentloaded", "networkidle"])
     command.add_argument("--full-page", action="store_true")
+    sequence = sub.add_parser("sequence")
+    sequence.add_argument("plan")
+    sequence.add_argument("--screenshots", default="artifacts")
     args = parser.parse_args(argv)
     try:
+        if args.command == "sequence":
+            with open(args.plan, "rb") as stream:
+                plan = load_json(stream.read(MAX_INPUT_BYTES + 1))
+            sys.stdout.write(canonical(capture_sequence(plan, args.screenshots)))
+            return 0
         viewports = tuple(tuple(int(v) for v in raw.split("x")) for raw in args.viewport) or CaptureOptions().viewports
         options = CaptureOptions(viewports=viewports, timeout_seconds=args.timeout, max_nodes=args.max_nodes,
                                  max_scan=args.max_scan, wait_until=args.wait_until, full_page=args.full_page)

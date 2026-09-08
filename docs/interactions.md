@@ -36,3 +36,37 @@ Inputs reference `fixture:` parameters or `redacted:` identifiers. Do not put se
 values in references, DOM payloads, assertions, or artifacts. Expected assertions
 have separate origin and action references; they are never treated as observations.
 The core validator cannot verify an artifact's contents or a collector's honesty.
+
+## Optional explicit browser capture
+
+Install `visparse[collector]` and Chromium. Run
+`visparse-collector sequence examples/interaction/plan.json --screenshots artifacts/ux`.
+The example URL is a local fixture server you start yourself. The collector starts
+no server; caller owns its lifecycle. Each call opens and closes a fresh browser
+context. Repeat with a different viewport for desktop/mobile evidence. Viewport
+size alone does not imply touch input; this adapter records pointer/keyboard.
+
+Plan version is `interaction-plan/0.1`, validated before browser or file effects.
+The example specifies all fields. Only click, fill, press, hover, focus, scroll,
+wait and reload are accepted. Targets must resolve exactly once. Fill values are
+provided separately under fixture/redacted parameter references. Key names are a
+bounded allowlist. `sample_ms` contains up to three sequential delays after the
+input, not absolute timestamps or inferred animation requirements.
+
+Limits: 20 steps, 120 seconds total after adapter start, 10 seconds per action,
+200 requests, 20 MB total unique PNG bytes, 200 DOM/AX nodes per snapshot. DOM,
+masked PNG and computed AX evidence share collector-clock intervals and are
+non-atomic. DOM includes computed display/visibility, bounds, validity, focus,
+scroll and selected/expanded/checked attributes. Native DOM/AX IDs are not matched
+across snapshots. Missing transient states, frames, shadow trees and Canvas are
+omissions. Redaction removes input fields and supplied parameter values from
+retained text and masks them in screenshots; this is not a general PII detector.
+
+Navigation is limited to the exact initial URL and explicit `allowed_navigation`
+URLs (fragment changes allowed). Popups and downloads are outside this adapter's
+scope. A failed selector, blocked navigation, timeout, or missing evidence stops
+the plan without retries. Partial observations remain inspectable. DOM comparison
+reports sampled change/no change only; fill values may be masked, so a successful
+fill can legitimately have no observable change. Browser launch failures surface
+as adapter errors rather than fabricated action results. External side effects of
+a caller-authorized click are not rolled back by closing the context.

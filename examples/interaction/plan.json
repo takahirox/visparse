@@ -1,0 +1,1 @@
+{"action_timeout_ms":1500,"allowed_navigation":[],"max_artifact_bytes":10000000,"parameters":{"fixture:email":"private@example.test"},"schema_version":"interaction-plan/0.1","steps":[{"delta":[0,0],"input_ref":null,"key":null,"kind":"click","sample_ms":[],"selector":"#open","wait_ms":0}],"timeout_ms":30000,"url":"http://127.0.0.1:8000/interactions.html","viewport":[800,600]}
