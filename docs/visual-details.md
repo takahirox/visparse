@@ -54,7 +54,7 @@ unknown DNA feature, never zero. Target evidence is excluded from reference DNA.
 
 ## Regional appearance
 
-An `appearance` object contains `region` and `properties`. All eight properties
+An `appearance` object contains `region` and `properties`. All nine properties
 are required; non-text, obscured, mixed, or unsupported properties use null and a
 reason.
 
@@ -68,6 +68,13 @@ reason.
 | `line_count` | Positive integer | `typography.line_count` |
 | `letter_spacing_em` | Finite signed number, relative to font size | `typography.letter_spacing_em` |
 | `line_height_factor` | Positive font-size multiplier | `typography.line_height_factor` |
+| `text_layout` | `single-block`, `multiple-blocks`, `non-text` | `typography.text_layout` |
+
+A known `line_count` requires `single-block`. Multiple independent navigation
+labels, quest items, or counters cannot be added up as one text block's line count;
+use null and a reason. For `non-text`, all typography properties except
+`text_layout` must be null. Distinct text blocks can have their own regional
+appearance records.
 
 Text block width can be requested separately through geometry for the same region.
 These estimates cannot identify an original font or establish exact CSS values.

@@ -14,6 +14,7 @@ APPEARANCE = {
     'line_count': ('typography.line_count', 'count', None, 0),
     'letter_spacing_em': ('typography.letter_spacing_em', 'em', None, 0.02),
     'line_height_factor': ('typography.line_height_factor', 'ratio', None, 0.1),
+    'text_layout': ('typography.text_layout', 'enum', ['single-block', 'multiple-blocks', 'non-text'], 0),
 }
 CROP = ['none', 'left', 'right', 'top', 'bottom', 'multiple']
 SUBJECT_KINDS = ['person', 'people-group', 'character', 'table', 'furniture', 'product',
@@ -41,6 +42,14 @@ def validate_appearance(value):
                 check(type(v) is int and v >= 1, 'expected positive integer line count')
             elif field == 'line_height_factor':
                 check(v > 0, 'line height factor must be positive')
+    properties = value['properties']
+    layout = properties['text_layout']['value']
+    check(properties['line_count']['value'] is None or layout == 'single-block',
+          'line count requires a single text block; do not count independent labels')
+    if layout == 'non-text':
+        check(all(properties[k]['value'] is None for k in
+                  ('font_weight', 'width_style', 'line_count', 'letter_spacing_em', 'line_height_factor')),
+              'non-text regions cannot claim typography values')
 
 
 def validate_media(value):
@@ -79,6 +88,10 @@ def detail_prompt(appearance_regions, media_regions):
         'and accent, never sampled pixels or recovered CSS. For gradients/textures or mixed styles use null '
         'unless a representative value is supported and qualified. Font weight is a visual estimate in 1..1000; '
         'do not claim to identify the original font. Letter spacing uses em, line height a font-size multiplier. '
+        'Classify text_layout as single-block, multiple-blocks, non-text, or null. A known line_count is allowed '
+        'ONLY for single-block text: never add independent navigation labels, quest items or counters together. '
+        'For multiple blocks use null line_count and request/describe smaller text regions when useful. '
+        'For non-text regions all typography properties other than text_layout must be null. '
         'Use null with a concrete reason for non-text regions, invisible or indeterminate properties. '
         'Text block dimensions belong in separately requested geometry, not invented font metrics. '
         f'For EVERY image return exactly one appearance record for each requested region: {list(appearance_regions)!r}, '

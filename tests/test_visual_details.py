@@ -30,7 +30,7 @@ def details_profile():
     result = profile([evidence('source')]); result['measurements'] = []
     base = result['interpretations'][0]
     appearance = {'region': 'headline', 'properties': dict(zip(APPEARANCE, map(q,
-        ('#ffffff', '#123456', None, 700, 'condensed', 2, -.02, 1.1))))}
+        ('#ffffff', '#123456', None, 700, 'condensed', 2, -.02, 1.1, 'single-block'))))}
     media = {'region': 'hero-photo', 'coordinate_space': 'media-ratio', 'coverage': q('partial'),
              'subjects': [{'region': 'table', 'kind': q('table'), 'bounds': bounds(), 'visibility': q('occluded'), 'crop': q('none')}]}
     result['interpretations'] = [
@@ -72,7 +72,7 @@ class VisualDetailsTests(unittest.TestCase):
     def test_appearance_projects_without_reextracting_or_promoting_estimates(self):
         dna = build_dna(details_profile())
         features = {f['name']: f for f in dna['features'] if f['scope']['subject'] == 'headline'}
-        self.assertEqual(len(features), 8)
+        self.assertEqual(len(features), 9)
         self.assertEqual(features['color.background_hex']['value'], '#123456')
         self.assertEqual(features['color.accent_hex']['status'], 'unknown')
         self.assertEqual(features['typography.letter_spacing_em']['unit'], 'em')
@@ -116,6 +116,23 @@ class VisualDetailsTests(unittest.TestCase):
         self.assertIn('visible fragment', output)
         self.assertIn('separate full-element estimate', output)
         self.assertIn('occluded-and-clipped', output)
+
+    def test_independent_labels_cannot_become_one_text_block_line_count(self):
+        value = details_profile(); properties = value['interpretations'][0]['appearance']['properties']
+        for layout in ('multiple-blocks', 'non-text', None):
+            properties['text_layout'] = q(layout)
+            with self.assertRaisesRegex(ValidationError, 'single text block'): validate_design_profile(value)
+        properties['text_layout'] = q('multiple-blocks')
+        properties['line_count'] = q(None, 'Several independent labels; not one text block.')
+        validate_design_profile(value)
+        dna = build_dna(value)
+        feature = next(f for f in dna['features'] if f['name'] == 'typography.line_count')
+        self.assertEqual(feature['status'], 'unknown')
+        properties['text_layout'] = q('non-text')
+        with self.assertRaisesRegex(ValidationError, 'non-text'): validate_design_profile(value)
+        for key in ('font_weight', 'width_style', 'letter_spacing_em', 'line_height_factor'):
+            properties[key] = q(None, 'No text in this region.')
+        validate_design_profile(value)
 
     def test_full_bounds_cannot_exclude_visible_fragment_or_claim_false_visibility(self):
         for full in (bounds(.2, .3, .6, None), bounds(.1, .3, .1, None), bounds(.0, .3, .32, None)):

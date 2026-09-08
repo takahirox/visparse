@@ -85,6 +85,7 @@ FEATURES.update({
     "geometry.visibility": ("spacing_geometry", "enum", VISIBILITY, 0),
     "typography.letter_spacing_em": ("typography", "em", None, 0.02),
     "typography.line_height_factor": ("typography", "ratio", None, 0.1),
+    "typography.text_layout": ("typography", "enum", ["single-block", "multiple-blocks", "non-text"], 0),
     "imagery.composition_coverage": ("imagery_grammar", "enum", ["complete", "partial"], 0),
     "imagery.subject_visibility": ("imagery_grammar", "enum", VISIBILITY, 0),
     "imagery.subject_crop": ("imagery_grammar", "enum", CROP, 0),

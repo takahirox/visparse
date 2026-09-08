@@ -62,6 +62,10 @@
           "line_height_factor": {
             "value": 1.1,
             "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "text_layout": {
+            "value": "single-block",
+            "uncertainty": "Synthetic fixture contains one two-line headline block."
           }
         }
       }
