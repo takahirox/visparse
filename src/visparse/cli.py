@@ -109,6 +109,8 @@ def _parser() -> argparse.ArgumentParser:
     analyze_design.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
     analyze_design.add_argument("--estimate-geometry", action="store_true",
                                 help="estimate qualified bounds; asserts each image is one complete viewport")
+    analyze_design.add_argument("--geometry-region", action="append", default=[],
+                                help="require bounds or unknowns for this neutral region in each image; repeatable")
     analyze_design.add_argument("--timeout-seconds", type=float, default=300,
                                 help="live analysis timeout, 1–900 seconds (default: 300)")
     analyze_design.add_argument(
@@ -192,7 +194,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 for index, path in enumerate(args.target, 1)
             ]
             profile = CodexDesignAnalyzer(intent=args.intent, timeout_seconds=args.timeout_seconds,
-                                          estimate_geometry=args.estimate_geometry).analyze(references, targets)
+                                          estimate_geometry=args.estimate_geometry,
+                                          geometry_regions=tuple(args.geometry_region)).analyze(references, targets)
             sys.stdout.write(normalize_design_profile(profile))
             return 0
         if args.command == "inspect-capabilities":

@@ -212,7 +212,7 @@ is visual reconstruction. This mode inventories visible regions, small identity
 labels and overlays, repeated control counts, headline line counts, relative
 placement/scale, and light/dark color distinctions. It describes roles instead of
 transcribing source branding. Unknown geometry is not invented or represented as
-mechanical measurement. The profile schema and default `adapt` intent are unchanged.
+mechanical measurement. The default `adapt` intent is unchanged.
 
 Analysis uses only supplied images, with apps, plugins, memories, repository
 instructions and web search disabled. `--timeout-seconds` defaults to 300 and accepts
@@ -227,10 +227,55 @@ qualitative. Estimates use `geometry.viewport_{x,y,width,height}_ratio`, with th
 top-left of the attached image as origin and the corresponding image dimension as
 denominator. They describe visible bounds, including clipping, not hidden extents.
 
-The analyzer is instructed to put these estimates only in linked interpretations,
+The analyzer puts these estimates only in linked interpretations,
 with confidence and uncertainty. Semantic extraction retains inferred provenance
 and confidence ceilings; DNA evidence also retains the source confidence assessment
 (basis and uncertainty). Low-confidence estimates remain filtered from guidance.
 These are model estimates, not calibrated measurements or CSS pixels. The adapter
 still rejects nonempty mechanical measurements; it cannot independently verify the
 accuracy of an estimated boundary or whether an image is a complete viewport.
+
+
+### Required region geometry
+
+Design Profile 0.2 adds an optional structured `geometry` field on `layout`
+interpretations. Existing 0.1 profiles remain readable; new analysis emits 0.2.
+Request specific neutral regions without supplying coordinates:
+
+```sh
+visparse analyze-design viewport.png --intent preserve --estimate-geometry \
+  --geometry-region hero --geometry-region hero-headline > profile.json
+```
+
+The Python equivalent is `CodexDesignAnalyzer(estimate_geometry=True,
+geometry_regions=("hero", "hero-headline"))`. A request applies to **each supplied
+image**, including targets. Each requested region must have exactly one geometry
+interpretation per source, even if every bound is unknown. Missing entries are a
+validation error, not an invitation to retry or fabricate geometry. Region names
+must be unique lowercase identifiers (letters, digits, hyphens; at most 32 requests).
+They describe desired visual roles and do not prove that those regions are present.
+
+An interpretation retains its observation links, statement and `confidence_id` and
+may add:
+
+```json
+{"geometry":{"region":"hero-headline","coordinate_space":"viewport-ratio","bounds":{
+  "x":{"value":0.17,"uncertainty":"Approximate left edge, about +/-0.02."},
+  "y":{"value":0.30,"uncertainty":"Approximate top edge, about +/-0.02."},
+  "width":{"value":0.32,"uncertainty":"Approximate visible width."},
+  "height":{"value":null,"uncertainty":"Lower boundary is obscured."}
+}}}
+```
+
+Each estimate must cite observations from exactly one source. All four bounds are
+required; null means unknown and requires an explanation. Known visible extents
+must be positive and fit within the viewport. These structural checks do not verify
+that the model identified the correct element or estimated its bounds accurately.
+
+`design-normalize` directly projects these bounds to scoped, **inferred**
+`geometry.viewport_*_ratio` features. It retains confidence and uncertainty, including
+unknown bounds, without another model interpreting the numbers. Source contexts
+still provide viewport/state; conflicting named contexts are rejected. Target
+geometry is excluded from reference DNA. `design-extract` is told which features
+are already mapped so that it can focus on the remaining evidence. Existing
+contradictory or low-confidence evidence is not silently overwritten or promoted.

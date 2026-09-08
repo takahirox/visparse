@@ -289,6 +289,11 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
                     dna["gaps"].append(f"Cross-context claim needs explicit scope mapping: {eid}")
                     continue
                 scope = contexts.get(eid, source_scopes[0])
+                geometry = record.get("geometry") if kind == "inferred" else None
+                if geometry is not None:
+                    check(scope["subject"] in ("page", geometry["region"]),
+                          "geometry region conflicts with supplied context")
+                    scope = {**scope, "subject": geometry["region"]}
                 level = confidence[record["confidence_id"]] if kind == "inferred" else None
                 details = copy.deepcopy(record)
                 if kind == "inferred":
@@ -299,7 +304,15 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
                                         "kind": kind, "statement": record.get("statement", record.get("name")),
                                         "confidence": level, "scope": copy.deepcopy(scope), "details": details})
                 eligible[record["id"]] = eid
-                if kind == "measured" and record["name"] in FEATURES:
+                if geometry is not None:
+                    for axis, bound in geometry["bounds"].items():
+                        dna["features"].append({"id": f"feature:{len(dna['features']) + 1}",
+                            "name": f"geometry.viewport_{axis}_ratio", "value": bound["value"], "unit": "ratio",
+                            "status": "unknown" if bound["value"] is None else "known", "origin": "inferred",
+                            "confidence": level, "scope": copy.deepcopy(scope), "evidence_ids": [eid],
+                            "method": "Direct projection of a qualified visual estimate; not a mechanical measurement.",
+                            "uncertainty": bound["uncertainty"] + " " + details["confidence_assessment"]["uncertainty"]})
+                elif kind == "measured" and record["name"] in FEATURES:
                     validate_value(record["name"], record["value"], record.get("unit"))
                     add_feature(record["name"], record["value"], record.get("unit"), kind, eid, scope, record["method"])
                 else:
