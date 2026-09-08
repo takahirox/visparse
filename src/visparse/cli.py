@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .interaction_export import export_interactions, render_interactions
 from .interaction_analysis import apply_interaction_analysis, analyze_interactions, CodexInteractionAnalyzer
 from .interaction import load_sequence, summarize_sequence
 from .evaluation import evaluate_fixture, load_fixture
@@ -58,6 +59,13 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    ux_export = subparsers.add_parser("ux-export")
+    ux_export.add_argument("path")
+    ux_export.add_argument("--patterns", required=True)
+    ux_export.add_argument("--intent", choices=["outcome-equivalence", "sequence-feedback"], default="sequence-feedback")
+    ux_export.add_argument("--view", choices=["audit", "generation"], default="generation")
+    ux_export.add_argument("--min-confidence", type=float, default=.6)
+    ux_export.add_argument("--format", choices=["json", "markdown"], default="json")
     ux = subparsers.add_parser("ux-analyze")
     ux.add_argument("path")
     ux.add_argument("--predictions", help="stored predictions; omit to invoke explicit Codex adapter")
@@ -138,6 +146,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "ux-export":
+            profile, patterns = load_json(_read_bounded(args.path)), load_json(_read_bounded(args.patterns))
+            options = dict(intent=args.intent, view=args.view, min_confidence=args.min_confidence)
+            sys.stdout.write(render_interactions(profile, patterns, **options) if args.format == "markdown" else canonical(export_interactions(profile, patterns, **options)))
+            return 0
         if args.command == "ux-analyze":
             sequence = load_sequence(_read_bounded(args.path))
             result = apply_interaction_analysis(sequence, load_json(_read_bounded(args.predictions))) if args.predictions else analyze_interactions(sequence, CodexInteractionAnalyzer(timeout_seconds=args.timeout_seconds))
