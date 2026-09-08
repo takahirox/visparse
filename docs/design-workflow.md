@@ -6,6 +6,10 @@ transfer. Core operations are deterministic and dependency-free. Browser
 execution lives in the optional `visparse_collector` package; generation and
 model inference remain external.
 
+See [transfer improvement notes](transfer-improvement-notes.md) for current
+Visparse improvement candidates and separately recorded generator integration
+hints.
+
 ```text
 reference screenshots ── analyze-design ── Design Profile ─┐
                                                         ├─ design-normalize ─ Design DNA
@@ -48,8 +52,9 @@ thresholds. The existing `evaluate` command retains its contract-test exit codes
 
 ## Design DNA 0.1
 
-The independent DNA schema and vocabulary are both versioned `0.1`; existing
-Design Profile and inspection schemas are unchanged. Unknown versions and
+The independent DNA schema is versioned `0.1`; the current vocabulary is `0.5`.
+Design Profile is `0.3`; older profiles and DNA vocabularies remain readable.
+See [structured visual details](visual-details.md) for the new inferred features. Unknown versions and
 unknown feature names are rejected. `src/visparse/dna.py:FEATURES` is the normative
 vocabulary, including dimensions, units, categorical values, and default
 comparison tolerances. Consumers can inspect this registry without a provider.
@@ -88,7 +93,8 @@ supporting inference. Source observations remain observations after normalizatio
 ### Profile projection and explicit annotations
 
 `build_dna(profile, inspection=..., annotations=..., contexts=...)` projects only
-recognized numeric measurement names mechanically. It retains reference-only
+recognized numeric measurement names mechanically and structured visual estimates
+deterministically, preserving their inferred origin. It retains reference-only
 observations and interpretations as evidence, and preserves reference-only
 principles as qualified `SHOULD` guidance. Unmapped prose is reported in `gaps`;
 the normalizer never guesses a score or category from wording. Target-specific

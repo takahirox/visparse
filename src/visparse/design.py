@@ -28,8 +28,9 @@ from .codex import (
 from .model import MAX_DEPTH, MAX_INPUT_BYTES, MAX_ITEMS, MAX_STRING_LENGTH, SourceEvidence, ValidationError
 from .contracts import check, number
 from .geometry import validate_geometry, validate_region_requests
+from .visual_details import validate_appearance, validate_media, detail_prompt
 
-DESIGN_SCHEMA_VERSION = "0.2"
+DESIGN_SCHEMA_VERSION = "0.3"
 DESIGN_CATEGORIES = frozenset({
     "layout", "visual_hierarchy", "spacing_density", "typography",
     "color_usage", "component_styling", "ui_patterns", "section_rhythm",
@@ -147,8 +148,8 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
         "interpretations", "confidence", "principles", "recommendations",
         "provenance",
     })
-    if profile["schema_version"] not in ("0.1", DESIGN_SCHEMA_VERSION):
-        _fail("schema_version", "expected '0.1' or '0.2'")
+    if profile["schema_version"] not in ("0.1", "0.2", DESIGN_SCHEMA_VERSION):
+        _fail("schema_version", "expected '0.1', '0.2' or '0.3'")
 
     sources = _objects(profile, "sources", nonempty=True)
     measurements = _objects(profile, "measurements")
@@ -223,6 +224,7 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
     for index, interpretation in enumerate(interpretations):
         path = f"interpretations[{index}]"
         _exact(interpretation, path, {"id", "observation_ids", "category", "statement", "confidence_id"},
+               {"geometry", "appearance", "media"} if profile["schema_version"] == "0.3" else
                {"geometry"} if profile["schema_version"] == "0.2" else set())
         _references(interpretation["observation_ids"], f"{path}.observation_ids", observation_ids, nonempty=True)
         _category(interpretation["category"], f"{path}.category")
@@ -230,14 +232,24 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
         confidence_id = _text(interpretation["confidence_id"], f"{path}.confidence_id")
         if confidence_id not in confidence_ids:
             _fail(f"{path}.confidence_id", f"unknown reference {confidence_id!r}")
-        if "geometry" in interpretation:
-            geometry = interpretation["geometry"]
-            validate_geometry(geometry)
-            check(interpretation["category"] == "layout", "geometry interpretation must use layout category")
+        extensions = set(interpretation) & {"geometry", "appearance", "media"}
+        check(len(extensions) <= 1, "use separate interpretations for each structured detail")
+        for extension in extensions:
+            detail = interpretation[extension]
+            if extension == "geometry":
+                validate_geometry(detail, extended=profile["schema_version"] == "0.3")
+                categories = {"layout"}
+            elif extension == "appearance":
+                validate_appearance(detail)
+                categories = {"typography", "color_usage"}
+            else:
+                validate_media(detail)
+                categories = {"imagery_media"}
+            check(interpretation["category"] in categories, f"{extension} interpretation requires category {sorted(categories)}")
             anchors = {sid for oid in interpretation["observation_ids"] for sid in observation_map[oid]["source_ids"]}
-            check(len(anchors) == 1, "geometry requires exactly one source")
-            key = (next(iter(anchors)), geometry["region"])
-            check(key not in geometry_keys, "duplicate geometry for source and region")
+            check(len(anchors) == 1, f"{extension} requires exactly one source")
+            key = (extension, next(iter(anchors)), detail["region"])
+            check(key not in geometry_keys, f"duplicate {extension} for source and region")
             geometry_keys.add(key)
 
     for index, principle in enumerate(principles):
@@ -372,6 +384,8 @@ class CodexDesignAnalyzer(DesignAnalyzer):
     intent: str = "adapt"
     estimate_geometry: bool = False
     geometry_regions: Sequence[str] = ()
+    appearance_regions: Sequence[str] = ()
+    media_regions: Sequence[str] = ()
 
     def analyze(
         self,
@@ -381,6 +395,8 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         check(self.intent in ("preserve", "adapt"), "intent must be preserve or adapt")
         check(type(self.estimate_geometry) is bool, "estimate_geometry must be a boolean")
         validate_region_requests(self.geometry_regions, self.estimate_geometry)
+        validate_region_requests(self.appearance_regions, True)
+        validate_region_requests(self.media_regions, self.estimate_geometry)
         number(self.timeout_seconds, 1, 900)
         if not references:
             raise ValidationError("at least one reference screenshot is required")
@@ -394,7 +410,8 @@ class CodexDesignAnalyzer(DesignAnalyzer):
                     paths.append(image.name)
             result = self.runner.run(self._argv(paths, self._prompt(
                 references, targets, intent=self.intent, estimate_geometry=self.estimate_geometry,
-                geometry_regions=self.geometry_regions,
+                geometry_regions=self.geometry_regions, appearance_regions=self.appearance_regions,
+                media_regions=self.media_regions,
             )), timeout=self.timeout_seconds)
         except FileNotFoundError:
             raise CodexUnavailableError("codex executable is unavailable; install Codex CLI or configure executable") from None
@@ -423,6 +440,13 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             check(self.estimate_geometry or not covered, "geometry was not requested")
             missing = sorted({(s.id, region) for s in supplied for region in self.geometry_regions} - covered)
             check(not missing, f"missing requested geometry (return estimates or explicit unknowns): {missing}")
+            for extension, requested in (("appearance", self.appearance_regions), ("media", self.media_regions)):
+                covered = {(sid, i[extension]['region']) for i in profile['interpretations'] if extension in i
+                           for oid in i['observation_ids'] for sid in observations[oid]['source_ids']}
+                if extension == "media":
+                    check(self.estimate_geometry or not covered, "media geometry was not requested")
+                missing = sorted({(s.id, region) for s in supplied for region in requested} - covered)
+                check(not missing, f"missing requested {extension} (return estimates or explicit unknowns): {missing}")
             return profile
         except (ValidationError, TypeError) as error:
             raise CodexValidationError(f"codex returned invalid design profile: {error}") from None
@@ -439,10 +463,13 @@ class CodexDesignAnalyzer(DesignAnalyzer):
 
     @staticmethod
     def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence], *,
-                intent: str = "adapt", estimate_geometry: bool = False, geometry_regions: Sequence[str] = ()) -> str:
+                intent: str = "adapt", estimate_geometry: bool = False, geometry_regions: Sequence[str] = (),
+                appearance_regions: Sequence[str] = (), media_regions: Sequence[str] = ()) -> str:
         check(intent in ("preserve", "adapt"), "intent must be preserve or adapt")
         check(type(estimate_geometry) is bool, "estimate_geometry must be a boolean")
         validate_region_requests(geometry_regions, estimate_geometry)
+        validate_region_requests(appearance_regions, True)
+        validate_region_requests(media_regions, estimate_geometry)
         geometry = (
             "The caller declares each attachment is a complete single-viewport capture. "
             "Opt-in geometry estimation: for clearly identifiable regions, you may supply approximate "
@@ -453,7 +480,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "y and height by image height. Each value is between 0 and 1. These are approximate visual "
             "estimates, never measurements, CSS pixels, document coordinates or responsive rules. "
             "Use at most two decimal places and describe confidence, uncertain edges and rough error bounds. "
-            "Estimate only visible bounds; do not reconstruct hidden or offscreen extents. Set indeterminate "
+            "The bounds field describes only visible fragments, not full element size. Set indeterminate "
             "coordinates to null rather than guessing. If an attachment appears cropped or full-page rather than a "
             "single viewport, leave its viewport geometry unknown. Prefer major regions and alignment anchors; "
             "do not enumerate a bounding box for every repeated icon. Keep numeric geometry out of observations "
@@ -462,7 +489,14 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "{region:neutral-id,coordinate_space:'viewport-ratio',bounds:{x:{value:number-or-null,uncertainty:text},"
             "y:{value:number-or-null,uncertainty:text},width:{value:number-or-null,uncertainty:text},"
             "height:{value:number-or-null,uncertainty:text}}}. Link observations from exactly one image. "
-            "Each known extent must be positive, and x+width and y+height must not exceed 1. "
+            "Also include visibility:{value:'fully-visible'|'occluded'|'clipped'|'occluded-and-clipped'|null,uncertainty:text}. "
+            "Keep full element estimates separate in optional full_bounds with the same four qualified axes. "
+            "Full bounds use the SAME viewport coordinate frame, may extend outside 0..1, and must contain known visible bounds. "
+            "For obscured regions include full_bounds with nulls and concrete reasons wherever hidden extent is unsupported; "
+            "never equate an occluded fragment with the full element. Any supported full estimate needs an explicit "
+            "basis and uncertainty in its axis entries; use a conservative shared interpretation confidence. "
+            "Fully-visible full bounds, if provided, must agree with visible bounds. "
+            "In visible bounds each known extent must be positive, and x+width and y+height must not exceed 1. "
             "Use null with a concrete reason for each unknown bound, including absent or ambiguous regions. "
             "Include small alignment anchors such as headline blocks, wordmarks and player identity separately "
             "from their containing sections. Do not replace a requested character with its whole stage. "
@@ -470,7 +504,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "return exactly one geometry interpretation for each requested region, even if all bounds are unknown. "
             "Do not omit requested regions or combine distinct slots. Never invent a visible region just to meet this list. "
         ) if estimate_geometry else (
-            "do not estimate pixel dimensions, distances or numeric ratios. "
+            "do not estimate pixel dimensions, distances or spatial numeric ratios. "
             "Obtain precise geometry through a separate measurement channel. "
         )
         preservation = (
@@ -510,7 +544,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "and photographic versus illustrated media. State when a property is obscured or indeterminate. "
             "Do not replace these concrete observations with generic style adjectives. "
             "measurements must be an empty array because this VLM-only adapter has no trusted mechanical measurement channel; "
-            + geometry +
+            + geometry + detail_prompt(appearance_regions, media_regions) +
             "Directly countable lines/elements belong in observations, not measurements. "
             f"observations contain id, source_ids, category, statement and only directly visible facts; observation category must be one of {json.dumps(sorted(OBSERVATION_DESIGN_CATEGORIES))}. "
             "interpretations contain id, observation_ids, category, statement, confidence_id. confidence contains id, level 0..1, uncertainty, basis. "

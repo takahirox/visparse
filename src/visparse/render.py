@@ -115,6 +115,18 @@ def render_design(dna: dict, *, mode: str = "compact", min_confidence: float = 0
                     wording = f"Use {name} around {value:.4g}{unit} as a starting point for the corresponding role."
             else:
                 wording = f"Preserve the {name} tendency: {_escape(str(value))}."
+            if name.startswith("geometry.viewport_"):
+                wording += " This describes the visible fragment in the viewport, not an inferred full element size."
+            elif name.startswith("geometry.full_viewport_"):
+                wording += " This is a separate full-element estimate in viewport coordinates, including hidden extent."
+            elif name.startswith("imagery.subject_") and name.endswith("_ratio"):
+                wording += " Use the visible enclosing media rectangle as the coordinate frame, not the viewport or original asset."
+            elif name == "typography.letter_spacing_em":
+                wording += " The em unit is relative to this region's font size."
+            elif name == "typography.line_height_factor":
+                wording += " Multiply this region's font size by this factor."
+            if name in {"color.foreground_hex", "color.background_hex", "color.accent_hex"} and feature["origin"] == "inferred":
+                wording += " This is a qualified color estimate, not a sampled pixel or verified source CSS."
             if "relative_to" in feature:
                 wording += f" Relative to {_escape(feature['relative_to'])}."
             origin = "inferred" if any(f["origin"] == "inferred" for f in group) else feature["origin"]

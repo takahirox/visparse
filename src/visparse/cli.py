@@ -111,6 +111,10 @@ def _parser() -> argparse.ArgumentParser:
                                 help="estimate qualified bounds; asserts each image is one complete viewport")
     analyze_design.add_argument("--geometry-region", action="append", default=[],
                                 help="require bounds or unknowns for this neutral region in each image; repeatable")
+    analyze_design.add_argument("--appearance-region", action="append", default=[],
+                                help="require qualified colors and typography for this region in each image")
+    analyze_design.add_argument("--media-region", action="append", default=[],
+                                help="require internal composition for this media region; needs --estimate-geometry")
     analyze_design.add_argument("--timeout-seconds", type=float, default=300,
                                 help="live analysis timeout, 1–900 seconds (default: 300)")
     analyze_design.add_argument(
@@ -195,7 +199,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             ]
             profile = CodexDesignAnalyzer(intent=args.intent, timeout_seconds=args.timeout_seconds,
                                           estimate_geometry=args.estimate_geometry,
-                                          geometry_regions=tuple(args.geometry_region)).analyze(references, targets)
+                                          geometry_regions=tuple(args.geometry_region),
+                                          appearance_regions=tuple(args.appearance_region),
+                                          media_regions=tuple(args.media_region)).analyze(references, targets)
             sys.stdout.write(normalize_design_profile(profile))
             return 0
         if args.command == "inspect-capabilities":

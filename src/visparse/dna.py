@@ -10,9 +10,11 @@ from typing import Any
 from .contracts import bounded, canonical, check, items, load_json, number, refs, shape, text, unique
 from .design import validate_design_profile
 from .inspection import validate_inspection
+from .geometry import AXES, VISIBILITY
+from .visual_details import APPEARANCE, CROP, SUBJECT_KINDS
 
 DNA_VERSION = "0.1"
-VOCABULARY_VERSION = "0.4"
+VOCABULARY_VERSION = "0.5"
 DIMENSIONS = (
     "typography", "color_strategy", "spacing_geometry", "composition",
     "visual_hierarchy", "component_grammar", "imagery_grammar", "responsive",
@@ -78,6 +80,21 @@ FEATURES.update({
     "imagery.text_space": ("imagery_grammar", "enum", ["left", "right", "above", "below", "none", "mixed"], 0),
     "imagery.subject_arrangement": ("imagery_grammar", "enum", ["left", "center", "right", "distributed", "mixed"], 0),
 })
+V4_FEATURES = frozenset(FEATURES)
+FEATURES.update({
+    "geometry.visibility": ("spacing_geometry", "enum", VISIBILITY, 0),
+    "typography.letter_spacing_em": ("typography", "em", None, 0.02),
+    "typography.line_height_factor": ("typography", "ratio", None, 0.1),
+    "imagery.composition_coverage": ("imagery_grammar", "enum", ["complete", "partial"], 0),
+    "imagery.subject_visibility": ("imagery_grammar", "enum", VISIBILITY, 0),
+    "imagery.subject_crop": ("imagery_grammar", "enum", CROP, 0),
+    "imagery.subject_kind": ("imagery_grammar", "enum", SUBJECT_KINDS, 0),
+})
+for axis in AXES:
+    FEATURES[f"geometry.full_viewport_{axis}_ratio"] = ("spacing_geometry", "ratio", None, 0.02)
+    FEATURES[f"imagery.subject_{axis}_ratio"] = ("imagery_grammar", "ratio", None, 0.02)
+MEDIA_RELATIONS = frozenset(name for name in FEATURES if name.startswith("imagery.subject_")
+                            and name != "imagery.subject_arrangement")
 RANK = {"measured": 0, "observed": 1, "inferred": 2}
 DEFAULT_SCOPE = {"viewport": "unspecified", "state": "default", "subject": "page"}
 
@@ -92,9 +109,11 @@ def validate_scope(scope: Any) -> dict:
 def feature_key(feature: dict) -> str:
     parts = [feature["name"], feature["scope"]]
     if "relative_to" in feature:
-        relation = feature["value"]
-        axis = {"above": "vertical", "below": "vertical", "left-of": "horizontal", "right-of": "horizontal"}.get(relation, relation)
-        parts.extend([feature["relative_to"], axis])
+        parts.append(feature["relative_to"])
+        if feature["name"] == "layout.relative_position":
+            relation = feature["value"]
+            axis = {"above": "vertical", "below": "vertical", "left-of": "horizontal", "right-of": "horizontal"}.get(relation, relation)
+            parts.append(axis)
     return canonical(parts).strip()
 
 
@@ -110,12 +129,17 @@ def validate_value(name: str, value: Any, unit: Any) -> None:
         check(choices is None or value in choices, f"{name}: unsupported category")
     else:
         number(value)
-        if name != "typography.letter_spacing":
+        if name not in {"typography.letter_spacing", "typography.letter_spacing_em",
+                        "geometry.full_viewport_x_ratio", "geometry.full_viewport_y_ratio"}:
             check(value >= 0, f"{name}: negative value")
         if kind == "count":
             check(type(value) is int and value >= 1, "expected positive integer count")
         if name.startswith("geometry.viewport_"):
             check(value <= 1, "expected viewport fraction")
+        if name.startswith("imagery.subject_") and kind == "ratio":
+            number(value, 0, 1)
+        if name == "typography.line_height_factor":
+            check(value > 0, "line height factor must be positive")
         if name in {"surface.shadow_usage", "surface.border_usage"}:
             check(value <= 1, f"{name}: expected fraction")
 
@@ -123,7 +147,7 @@ def validate_value(name: str, value: Any, unit: Any) -> None:
 def validate_dna(dna: Any) -> dict:
     bounded(dna)
     shape(dna, {"schema_version", "vocabulary_version", "sources", "evidence", "features", "principles", "gaps", "provenance"})
-    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", "0.2", "0.3", VOCABULARY_VERSION},
+    check(dna["schema_version"] == DNA_VERSION and dna["vocabulary_version"] in {"0.1", "0.2", "0.3", "0.4", VOCABULARY_VERSION},
           "unsupported DNA schema/vocabulary version")
     sources = unique(dna["sources"])
     for source in sources.values():
@@ -154,7 +178,8 @@ def validate_dna(dna: Any) -> dict:
         check(dna["vocabulary_version"] != "0.1" or feature["name"] in LEGACY_FEATURES, "feature requires vocabulary 0.2")
         check(dna["vocabulary_version"] != "0.2" or feature["name"] in V2_FEATURES, "feature requires vocabulary 0.3")
         check(dna["vocabulary_version"] != "0.3" or feature["name"] in V3_FEATURES, "feature requires vocabulary 0.4")
-        if feature["name"] == "layout.relative_position":
+        check(dna["vocabulary_version"] != "0.4" or feature["name"] in V4_FEATURES, "feature requires vocabulary 0.5")
+        if feature["name"] == "layout.relative_position" or feature["name"] in MEDIA_RELATIONS:
             text(feature.get("relative_to"))
             check(feature["relative_to"] != feature["scope"]["subject"], "self relationship")
             check(any(e["scope"] == {**feature["scope"], "subject": feature["relative_to"]} for e in evidence.values()), "relationship target missing in same viewport/state")
@@ -183,7 +208,7 @@ def validate_dna(dna: Any) -> dict:
         else:
             check(feature["value"] is None, "unknown/not-applicable value must be null")
             spec = FEATURES[feature["name"]]
-            validate_value(feature["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" else 0), feature["unit"])
+            validate_value(feature["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" or feature["name"] in {"typography.font_weight", "typography.line_height_factor"} else 0), feature["unit"])
     for principle in principles.values():
         shape(principle, {"id", "statement", "evidence_ids", "confidence", "strength", "scope", "basis"})
         text(principle["statement"])
@@ -238,6 +263,51 @@ def group_status(features: list[dict], threshold: float) -> str:
     return "known"
 
 
+def _project_visual_detail(dna: dict, kind: str, detail: dict, evidence: dict) -> None:
+    """Project validated estimates without asking a second model to reinterpret them."""
+    def emit(name, estimate, source=evidence, relative_to=None):
+        spec = FEATURES[name]
+        unit = None if spec[1] in {"text", "enum", "number", "color", "count"} else spec[1]
+        feature = {
+            "id": f"feature:{len(dna['features']) + 1}", "name": name,
+            "value": estimate["value"], "unit": unit,
+            "status": "unknown" if estimate["value"] is None else "known", "origin": "inferred",
+            "confidence": source["confidence"], "scope": copy.deepcopy(source["scope"]),
+            "evidence_ids": [source["id"]],
+            "method": "Direct projection of a qualified visual estimate; not a mechanical measurement.",
+            "uncertainty": estimate["uncertainty"] + " " + source["details"]["confidence_assessment"]["uncertainty"],
+        }
+        if relative_to is not None:
+            feature["relative_to"] = relative_to
+        dna["features"].append(feature)
+
+    if kind == "geometry":
+        for field, prefix in (("bounds", "geometry.viewport_"), ("full_bounds", "geometry.full_viewport_")):
+            for axis, bound in detail.get(field, {}).items():
+                emit(f"{prefix}{axis}_ratio", bound)
+        if "visibility" in detail:
+            emit("geometry.visibility", detail["visibility"])
+    elif kind == "appearance":
+        for field, estimate in detail["properties"].items():
+            emit(APPEARANCE[field][0], estimate)
+    else:
+        emit("imagery.composition_coverage", detail["coverage"])
+        for subject in detail["subjects"]:
+            child = copy.deepcopy(evidence)
+            child["id"] = evidence["id"] + ":subject:" + subject["region"]
+            child["scope"]["subject"] = "media/" + detail["region"] + "/" + subject["region"]
+            child["statement"] = "Qualified media-local composition for " + subject["region"]
+            child["details"] = {"parent_evidence_id": evidence["id"], "coordinate_space": "media-ratio",
+                                "media_region": detail["region"], "subject": copy.deepcopy(subject),
+                                "confidence_assessment": copy.deepcopy(evidence["details"]["confidence_assessment"])}
+            dna["evidence"].append(child)
+            for axis, bound in subject["bounds"].items():
+                emit(f"imagery.subject_{axis}_ratio", bound, child, detail["region"])
+            emit("imagery.subject_visibility", subject["visibility"], child, detail["region"])
+            emit("imagery.subject_crop", subject["crop"], child, detail["region"])
+            emit("imagery.subject_kind", subject["kind"], child, detail["region"])
+
+
 def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
               annotations: dict | None = None, contexts: dict | None = None) -> dict:
     """Project known measurements; preserve prose; apply explicitly inferred annotations.
@@ -289,11 +359,12 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
                     dna["gaps"].append(f"Cross-context claim needs explicit scope mapping: {eid}")
                     continue
                 scope = contexts.get(eid, source_scopes[0])
-                geometry = record.get("geometry") if kind == "inferred" else None
-                if geometry is not None:
-                    check(scope["subject"] in ("page", geometry["region"]),
-                          "geometry region conflicts with supplied context")
-                    scope = {**scope, "subject": geometry["region"]}
+                detail_kind = next((k for k in ("geometry", "appearance", "media") if k in record), None) if kind == "inferred" else None
+                if detail_kind is not None:
+                    detail = record[detail_kind]
+                    check(scope["subject"] in ("page", detail["region"]),
+                          f"{detail_kind} region conflicts with supplied context")
+                    scope = {**scope, "subject": detail["region"]}
                 level = confidence[record["confidence_id"]] if kind == "inferred" else None
                 details = copy.deepcopy(record)
                 if kind == "inferred":
@@ -304,14 +375,8 @@ def build_dna(profile: dict | None = None, *, inspection: dict | None = None,
                                         "kind": kind, "statement": record.get("statement", record.get("name")),
                                         "confidence": level, "scope": copy.deepcopy(scope), "details": details})
                 eligible[record["id"]] = eid
-                if geometry is not None:
-                    for axis, bound in geometry["bounds"].items():
-                        dna["features"].append({"id": f"feature:{len(dna['features']) + 1}",
-                            "name": f"geometry.viewport_{axis}_ratio", "value": bound["value"], "unit": "ratio",
-                            "status": "unknown" if bound["value"] is None else "known", "origin": "inferred",
-                            "confidence": level, "scope": copy.deepcopy(scope), "evidence_ids": [eid],
-                            "method": "Direct projection of a qualified visual estimate; not a mechanical measurement.",
-                            "uncertainty": bound["uncertainty"] + " " + details["confidence_assessment"]["uncertainty"]})
+                if detail_kind is not None:
+                    _project_visual_detail(dna, detail_kind, detail, dna["evidence"][-1])
                 elif kind == "measured" and record["name"] in FEATURES:
                     validate_value(record["name"], record["value"], record.get("unit"))
                     add_feature(record["name"], record["value"], record.get("unit"), kind, eid, scope, record["method"])

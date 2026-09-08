@@ -239,7 +239,9 @@ accuracy of an estimated boundary or whether an image is a complete viewport.
 ### Required region geometry
 
 Design Profile 0.2 adds an optional structured `geometry` field on `layout`
-interpretations. Existing 0.1 profiles remain readable; new analysis emits 0.2.
+interpretations. Existing 0.1 and 0.2 profiles remain readable; new analysis emits 0.3.
+For regional appearance, visibility/full bounds, and composition inside media, see
+[structured visual details](docs/visual-details.md).
 Request specific neutral regions without supplying coordinates:
 
 ```sh
