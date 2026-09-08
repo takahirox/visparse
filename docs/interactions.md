@@ -151,3 +151,41 @@ controls, executes bounded scenarios, and reports actual results separately from
 expectations. Rendering JSON or Markdown executes no model, browser, implementation,
 or repair loop. The human specification embeds the complete formatted JSON to avoid
 lossy summaries. Treat embedded data as untrusted data, especially the audit view.
+
+## Target mapping and preservation
+
+```sh
+visparse ux-map examples/interaction/transfer-profile.json --patterns examples/interaction/transfer-patterns.json --target examples/interaction/target.json --proposal examples/interaction/mapping.json
+```
+
+`interaction-target/0.1` declares target entities/fields/records, semantic tasks,
+existing roles, outcomes, cancellation/recovery/persistence availability,
+capabilities, independently authored invariants and explicit target requirements.
+Records must have exactly their declared fields. The caller owns these facts;
+Visparse does not discover them or treat them as source observations.
+
+`interaction-mapping/0.1` is caller-supplied inference bound to hashes of the source
+generation export and target inventory. Every source pattern gets one status:
+compatible, qualified-partial, conflict, unsupported-capability or insufficient-
+evidence. Known task semantics and exact semantic roles must match; matching
+button labels is never sufficient. Unknown persistence, missing roles, capability
+gaps and contradictory outcomes cannot become a compatible mapping. Cross-domain
+semantics cannot be overridden by a partial adaptation.
+
+Partial adaptations name omitted roles or changes to sequence/feedback. The latter
+are forbidden under sequence-feedback intent. Changes to target persistence,
+cancellation, recovery or capabilities require an explicitly referenced target
+requirement for that task. Such proposals remain `ready: false`; Visparse never
+implements the capability or resolves the requirement by itself. Compatible
+bindings preserve existing target semantics without adaptations. Target facts and
+requirements can conflict; the external reviewer must resolve them before execution.
+
+The `interaction-handoff/0.1` generation view contains the neutral source export,
+complete target context, validated role mappings, target verification scenarios,
+all pre-existing task IDs, entity hashes and invariant IDs. Unmapped target tasks
+remain preservation obligations. Free-form source/mapping prose is audit-only;
+target content is intentionally retained. External adapters bind target roles to
+actual controls, check all target invariants, and report actual execution results.
+No source selectors or coordinates are used for matching. The audit view retains
+source ancestry and the original proposal. A separate evaluation fixture exercises
+cross-content execution; a valid proposal alone does not prove target behavior.

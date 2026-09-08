@@ -65,3 +65,26 @@ def flow_fixture():
     enriched={'schema_version':'interaction-patterns/0.1','profile_sha256':profile_digest(profile),'patterns':[
         {'id':semantic,'semantic':semantic,'steps':steps,'persistence':{'mode':'reload','claim_id':'persist'} if semantic=='save-entity' else {'mode':'unknown','claim_id':None},'origin':'supplied-inference','method':'explicit synthetic annotation','confidence':.8,'uncertainty':'No real-model accuracy claim'} for semantic,steps in groups.items()]}
     return profile,enriched
+
+
+def target_inventory():
+    return {'schema_version':'interaction-target/0.1','id':'reading-list','origin':'Independent target fixture specification',
+        'entities':[{'id':'article','fields':['id','title'],'records':[{'id':'a1','title':'Growing a city garden'},{'id':'a2','title':'A guide to bicycles'}]}],
+        'tasks':[{'id':'bookmark','semantic':'save-entity','entity_id':'article','roles':['save','reload','remove'],'effects':['saved','removed'],
+                  'persistence':'reload','cancellation':'unsupported','recovery':'unsupported','capabilities':['dom','local-storage']}],
+        'capabilities':['dom','local-storage'],
+        'invariants':[{'id':'keep-data','task_id':'bookmark','kind':'data','expected':'All article IDs and titles preserved','origin':'target author'},
+                      {'id':'keep-storage','task_id':'bookmark','kind':'persistence','expected':'Saved set survives reload; removing one article preserves other articles','origin':'target author'}],
+        'requirements':[]}
+
+
+def mapping_fixture():
+    from visparse.interaction_export import export_interactions
+    from visparse.interaction_mapping import digest
+    profile,p=flow_fixture();p['patterns']=p['patterns'][:1]
+    target=target_inventory();source=export_interactions(profile,p)
+    proposal={'schema_version':'interaction-mapping/0.1','source_sha256':digest(source),'target_sha256':digest(target),'intent':'sequence-feedback',
+        'origin':'supplied-inference','method':'Caller maps saved entity to target bookmark','uncertainty':'Controlled fixture only',
+        'bindings':[{'pattern_id':'pattern-0','task_id':'bookmark','status':'compatible','roles':{'save':'save','reload':'reload','remove':'remove'},'adaptations':[],
+                     'requirement_ids':[],'reason':'Same save/remove semantics and same-context reload persistence','confidence':.8,'uncertainty':'Other storage lifetimes unknown'}]}
+    return profile,p,target,proposal
