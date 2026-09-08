@@ -19,3 +19,14 @@ def sequence(outcome="observed-effect", kind="click"):
         value["actions"][0]["after"] = []
         value["captures"].pop()
     return deepcopy(value)
+
+
+def prediction(value=None):
+    from visparse.interaction_analysis import sequence_digest
+    value = value or sequence()
+    state = dict(component="saved-item", method="fixture annotation", confidence=.8, uncertainty="only recorded path")
+    return {"schema_version": "interaction-prediction/0.1", "sequence_sha256": sequence_digest(value),
+            "states": [dict(state, id="unsaved", label="Unsaved", capture_ids=["before"]), dict(state, id="saved", label="Saved", capture_ids=["after"])],
+            "claims": [{"id":"result", "kind":"outcome", "subject":"saved-item", "status":"known", "value":"Saved marker visible", "evidence_ids":["action","after"], "method":"fixture annotation", "confidence":.8, "uncertainty":"backend and persistence unknown"}],
+            "transitions": [{"id":"save-transition", "from":"unsaved", "to":"saved", "action_id":"action", "guard_claim_id":None, "claim_ids":["result"], "method":"fixture annotation", "confidence":.8, "uncertainty":"other paths unknown"}],
+            "conflicts":[], "gaps":["Persistence and unrecorded branches unknown"]}

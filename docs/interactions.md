@@ -70,3 +70,42 @@ reports sampled change/no change only; fill values may be masked, so a successfu
 fill can legitimately have no observable change. Browser launch failures surface
 as adapter errors rather than fabricated action results. External side effects of
 a caller-authorized click are not rolled back by closing the context.
+
+## Explicit analysis
+
+```sh
+visparse ux-analyze examples/interaction/sequence.json --predictions examples/interaction/prediction.json
+# Optional live provider call, only when deliberately requested:
+visparse ux-analyze examples/interaction/sequence.json --timeout-seconds 300
+```
+
+`interaction-profile/0.1` embeds validated evidence, exact mechanical action
+projection, and an `interaction-prediction/0.1` inference layer. The example
+prediction is a synthetic annotation, not a measured live-model result. The SHA-256
+binds a prediction to its precise input. States cite captures; transitions cite one
+recorded action and matching pre/post captures. Unknown resulting states and guards
+are null. Nothing automatically merges states or creates transitions from imagery.
+Component scopes and dependency claims support local task models.
+
+All states, claims and transitions are inferred, with explicit method, confidence
+and uncertainty. Claim kinds include role, guard, feedback, outcome, cancellation,
+recovery, focus, persistence, pacing, state and dependency. Availability distinguishes
+known, observed absence, unavailable and unsupported. Unknown values are null.
+Expectations cannot be cited as evidence. Known persistence requires an observed
+reload and its pre/post evidence; known application outcomes cannot be established
+by failed collection/execution. Timing samples remain mechanical measurements;
+pacing is an interpretation. Target requirements belong to the later mapping layer.
+
+Conflicts remain as cited pairs with reasons; gaps remain explicit. Limits are 200
+states, 500 claims, 100 transitions and 100 conflicts within 1 MiB. Validators reject
+fabricated IDs, modified projections, unknown versions and inconsistent ancestry;
+they cannot prove the truth of a prose interpretation that cites real evidence.
+Independent behavioral fixtures assess that separate semantic failure mode.
+
+The provider-neutral `InteractionAnalyzer` protocol returns predictions.
+`CodexInteractionAnalyzer` uses the existing mockable ProcessRunner boundary,
+validates options before a single invocation and validates output afterward. Live
+prompts are capped at 100 KB for OS argument limits; stored predictions accept the
+core bundle limit. Provider, timeout and malformed-output failures surface without
+retry, confidence repair, model switching, or usage-limit reset. No live call is
+needed for normal validation, projection, rendering or stored-prediction tests.
