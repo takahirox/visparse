@@ -29,6 +29,21 @@ PYTHONPATH=src python -m visparse evaluate examples/evaluation_fixture.json
 
 The evidence CLI commands include `analyze`, `analyze-design`, `inspect`, `inspect-summary`, `inspect-capabilities`, `validate`, `normalize`, `summarize`, and `evaluate`; the design workflow commands are described below. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
 
+## Select the analysis agent and model
+
+All four LLM commands (`analyze`, `analyze-design`, `design-extract`, `ux-analyze`)
+accept `--agent`, `--model`, `--executable`, `--timeout-seconds` and `--config`.
+Shared configuration and per-command overrides are supported:
+
+```sh
+visparse analyze-design screenshot.png --config examples/analyzer-config.json
+visparse ux-analyze sequence.json --agent codex --model gpt-6-astra
+```
+
+Codex is the default; another agent can connect through an explicit JSON-protocol
+wrapper with `--agent command`. See [analyzer configuration](docs/analyzers.md).
+Stored predictions and deterministic commands do not invoke an LLM.
+
 ## Analyze and transfer observed interactions
 
 The separate UX workflow captures explicit action sequences, validates evidence,

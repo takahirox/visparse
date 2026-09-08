@@ -110,6 +110,26 @@ core bundle limit. Provider, timeout and malformed-output failures surface witho
 retry, confidence repair, model switching, or usage-limit reset. No live call is
 needed for normal validation, projection, rendering or stored-prediction tests.
 
+### Selecting the analysis agent and model
+
+All four LLM analysis commands now share the same agent options and config file.
+See [Analyzer configuration](analyzers.md) for common settings, per-command
+settings, precedence and the external-agent protocol.
+
+```sh
+visparse ux-analyze sequence.json --agent codex --model gpt-6-astra
+visparse ux-analyze sequence.json --config examples/analyzer-config.json
+```
+
+The original `{"ux_analyzer": {...}}` config remains accepted for UX analysis.
+`--predictions` still bypasses all live configuration and agent execution.
+The CLI command adapter now uses `analysis-agent-request/0.1`, including the
+command name and image_paths (empty for standard UX evidence). The original
+`CommandInteractionAnalyzer` Python class and
+`InteractionAnalyzerConfig.create_analyzer()` compatibility factory still use
+`interaction-analysis-request/0.1`; existing Python wrappers can retain that
+three-field request. New wrappers should implement the shared CLI protocol.
+
 ## Auditable specifications and reusable patterns
 
 ```sh

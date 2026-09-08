@@ -1,0 +1,12 @@
+{
+  "analyzer": {
+    "agent": "codex",
+    "model": "gpt-6-astra"
+  },
+  "commands": {
+    "analyze": {"timeout_seconds": 120},
+    "analyze-design": {"timeout_seconds": 300},
+    "design-extract": {"timeout_seconds": 300},
+    "ux-analyze": {"timeout_seconds": 300}
+  }
+}

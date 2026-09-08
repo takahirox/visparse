@@ -1,0 +1,8 @@
+{
+  "ux_analyzer": {
+    "agent": "codex",
+    "executable": "codex",
+    "model": "gpt-6-astra",
+    "timeout_seconds": 300
+  }
+}

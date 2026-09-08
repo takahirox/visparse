@@ -12,6 +12,7 @@ from .interaction_evaluation import evaluate_interactions
 from .interaction_mapping import prepare_mapping
 from .interaction_export import export_interactions, render_interactions
 from .interaction_analysis import apply_interaction_analysis, analyze_interactions, CodexInteractionAnalyzer
+from .agent_config import AnalyzerConfig, AnalysisAgentError
 from .interaction import load_sequence, summarize_sequence
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
@@ -19,7 +20,7 @@ from .design import CodexDesignAnalyzer, normalize_design_profile
 from .design import load_design_profile
 from .contracts import canonical, load_json
 from .dna import build_dna, load_dna, normalize_dna
-from .semantic import DEFAULT_EXTRACTION_TIMEOUT, CodexSemanticExtractor, apply_semantics, extract_design
+from .semantic import CodexSemanticExtractor, apply_semantics, extract_design
 from .media import assess_media
 from .coverage import audit_coverage
 from .trace import trace_guidance
@@ -51,6 +52,22 @@ def _json_line(value: object) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n"
 
 
+def _agent_arguments(parser):
+    parser.add_argument("--config", help="explicit JSON file with shared or command-specific analyzer settings")
+    parser.add_argument("--agent", choices=["codex", "command"], help="live adapter (default: codex)")
+    parser.add_argument("--executable", help="agent executable path/name; command requires a protocol wrapper")
+    parser.add_argument("--model", help="explicit model identifier; omitted uses the agent default")
+    parser.add_argument("--timeout-seconds", type=float,
+                        help="live timeout, 1–900 seconds (default: 120 for analyze, 300 otherwise); ignored with --predictions")
+
+
+def _agent_config(args):
+    return AnalyzerConfig.resolve(
+        load_json(_read_bounded(args.config)) if args.config else None,
+        command=args.command, agent=args.agent, executable=args.executable,
+        model=args.model, timeout_seconds=args.timeout_seconds)
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="visparse", description="Validate and inspect Visparse JSON")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -80,8 +97,8 @@ def _parser() -> argparse.ArgumentParser:
     ux_export.add_argument("--format", choices=["json", "markdown"], default="json")
     ux = subparsers.add_parser("ux-analyze")
     ux.add_argument("path")
-    ux.add_argument("--predictions", help="stored predictions; omit to invoke explicit Codex adapter")
-    ux.add_argument("--timeout-seconds", type=float, default=300)
+    ux.add_argument("--predictions", help="stored predictions; skips all live agent configuration")
+    _agent_arguments(ux)
     trace = subparsers.add_parser("design-trace")
     trace.add_argument("path", help="DNA to trace into generation guidance")
     trace.add_argument("--min-confidence", type=float, default=0.6)
@@ -106,8 +123,7 @@ def _parser() -> argparse.ArgumentParser:
     extract = subparsers.add_parser("design-extract")
     extract.add_argument("path", help="normalized DNA containing observed evidence")
     extract.add_argument("--predictions", help="stored semantic predictions; omit to explicitly invoke Codex")
-    extract.add_argument("--timeout-seconds", type=float, default=DEFAULT_EXTRACTION_TIMEOUT,
-                         help="live extraction timeout, 1–900 seconds (default: 300); ignored with --predictions")
+    _agent_arguments(extract)
     render = subparsers.add_parser("design-render")
     render.add_argument("path")
     render.add_argument("--mode", choices=["compact", "full"], default="compact")
@@ -131,6 +147,7 @@ def _parser() -> argparse.ArgumentParser:
     export.add_argument("--capabilities", help="optional media capability declaration")
     analyze = subparsers.add_parser("analyze")
     analyze.add_argument("image", metavar="IMAGE", help="image path")
+    _agent_arguments(analyze)
     analyze_design = subparsers.add_parser("analyze-design")
     analyze_design.add_argument("--intent", choices=["preserve", "adapt"], default="adapt")
     analyze_design.add_argument("--estimate-geometry", action="store_true",
@@ -141,8 +158,7 @@ def _parser() -> argparse.ArgumentParser:
                                 help="require qualified colors and typography for this region in each image")
     analyze_design.add_argument("--media-region", action="append", default=[],
                                 help="require internal composition for this media region; needs --estimate-geometry")
-    analyze_design.add_argument("--timeout-seconds", type=float, default=300,
-                                help="live analysis timeout, 1–900 seconds (default: 300)")
+    _agent_arguments(analyze_design)
     analyze_design.add_argument(
         "images", metavar="REFERENCE_IMAGE", nargs="+",
         help="one or more reference-site screenshot paths",
@@ -174,7 +190,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "ux-analyze":
             sequence = load_sequence(_read_bounded(args.path))
-            result = apply_interaction_analysis(sequence, load_json(_read_bounded(args.predictions))) if args.predictions else analyze_interactions(sequence, CodexInteractionAnalyzer(timeout_seconds=args.timeout_seconds))
+            if args.predictions:
+                result = apply_interaction_analysis(sequence, load_json(_read_bounded(args.predictions)))
+            else:
+                config = _agent_config(args)
+                result = analyze_interactions(sequence, CodexInteractionAnalyzer(**config.adapter_options(args.command)))
             sys.stdout.write(canonical(result))
             return 0
         if args.command in {"ux-validate", "ux-summary"}:
@@ -200,7 +220,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.command == "design-extract":
             dna = load_dna(_read_bounded(args.path))
             result = apply_semantics(dna, load_json(_read_bounded(args.predictions))) if args.predictions else extract_design(
-                dna, CodexSemanticExtractor(timeout_seconds=args.timeout_seconds))
+                dna, CodexSemanticExtractor(**_agent_config(args).adapter_options(args.command)))
             sys.stdout.write(normalize_dna(result))
             return 0
         if args.command == "design-normalize":
@@ -234,7 +254,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if args.command == "analyze":
             source = SourceEvidence.from_file("source-1", args.image)
-            record = CodexAnalyzer().analyze(source)
+            record = CodexAnalyzer(**_agent_config(args).adapter_options(args.command)).analyze(source)
             sys.stdout.write(normalize_record(record))
             return 0
         if args.command == "analyze-design":
@@ -246,7 +266,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 SourceEvidence.from_file(f"target-{index}", path)
                 for index, path in enumerate(args.target, 1)
             ]
-            profile = CodexDesignAnalyzer(intent=args.intent, timeout_seconds=args.timeout_seconds,
+            profile = CodexDesignAnalyzer(intent=args.intent, **_agent_config(args).adapter_options(args.command),
                                           estimate_geometry=args.estimate_geometry,
                                           geometry_regions=tuple(args.geometry_region),
                                           appearance_regions=tuple(args.appearance_region),
@@ -276,6 +296,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             sys.stdout.write(_json_line(summarize_record(record)))
         return 0
-    except (OSError, ValidationError, TypeError, ValueError, CodexAnalyzerError) as error:
+    except (OSError, ValidationError, TypeError, ValueError, CodexAnalyzerError, AnalysisAgentError) as error:
         sys.stderr.write(f"visparse: {error}\n")
         return 2

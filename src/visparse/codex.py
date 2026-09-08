@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Protocol, Sequence
 
 from .analyzer import Analyzer, run_analyzer
+from .agent_options import validate_agent_options
 from .model import SourceEvidence, ValidationError
 
 
@@ -88,8 +89,10 @@ class CodexAnalyzer(Analyzer):
     runner: ProcessRunner = field(default_factory=SubprocessRunner)
     executable: str = "codex"
     timeout_seconds: float = 120.0
+    model: str | None = None
 
     def analyze(self, evidence: SourceEvidence) -> dict[str, Any]:
+        validate_agent_options(self.executable, self.model, self.timeout_seconds)
         prompt = self._prompt(evidence)
         path: str | None = None
         try:
@@ -131,6 +134,7 @@ class CodexAnalyzer(Analyzer):
             "--skip-git-repo-check",
             "--ignore-user-config",
             "--ignore-rules",
+            *(["--model", self.model] if self.model is not None else []),
             "--image",
             image_path,
             "--",

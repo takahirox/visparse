@@ -27,6 +27,7 @@ from .codex import (
 )
 from .model import MAX_DEPTH, MAX_INPUT_BYTES, MAX_ITEMS, MAX_STRING_LENGTH, SourceEvidence, ValidationError
 from .contracts import check, number
+from .agent_options import validate_agent_options
 from .geometry import validate_geometry, validate_region_requests
 from .visual_details import validate_appearance, validate_media, detail_prompt
 
@@ -386,6 +387,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
     geometry_regions: Sequence[str] = ()
     appearance_regions: Sequence[str] = ()
     media_regions: Sequence[str] = ()
+    model: str | None = None
 
     def analyze(
         self,
@@ -397,7 +399,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
         validate_region_requests(self.geometry_regions, self.estimate_geometry)
         validate_region_requests(self.appearance_regions, True)
         validate_region_requests(self.media_regions, self.estimate_geometry)
-        number(self.timeout_seconds, 1, 900)
+        validate_agent_options(self.executable, self.model, self.timeout_seconds)
         if not references:
             raise ValidationError("at least one reference screenshot is required")
         supplied = list(references) + list(targets)
@@ -458,6 +460,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "--disable", "apps", "--disable", "plugins", "--disable", "memories",
             "-c", "memories.use_memories=false", "-c", "memories.generate_memories=false",
             "-c", "project_doc_max_bytes=0", "-c", 'web_search="disabled"',
+            *(["--model", self.model] if self.model is not None else []),
             "--image", *image_paths, "--", prompt,
         ]
 
