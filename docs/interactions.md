@@ -109,3 +109,45 @@ prompts are capped at 100 KB for OS argument limits; stored predictions accept t
 core bundle limit. Provider, timeout and malformed-output failures surface without
 retry, confidence repair, model switching, or usage-limit reset. No live call is
 needed for normal validation, projection, rendering or stored-prediction tests.
+
+## Auditable specifications and reusable patterns
+
+```sh
+visparse ux-export examples/interaction/profile.json --patterns examples/interaction/patterns.json --format markdown
+visparse ux-export examples/interaction/profile.json --patterns examples/interaction/patterns.json --view audit
+```
+
+`interaction-patterns/0.1` is explicitly supplied enrichment, bound to the profile
+hash. It declares controlled task semantics (save entity, inspect details, contact
+submission, session joining, view selection, filtering, loading), action roles,
+effects, feedback, qualified conditions, and persistence. Each step cites an
+existing transition and its claims. The enrichment's origin, method, uncertainty
+and confidence are retained; the renderer performs no inference. Pattern order
+must follow the recorded actions. Unsupported vocabulary requires a versioned
+extension rather than free-text guessing. Complete examples and both save/reload/
+remove and invalid/correct/submit/cancel fixtures are covered in offline tests.
+
+`interaction-export/0.1` records policy and profile digest. `sequence-feedback`
+requests preservation of sampled order and feedback; `outcome-equivalence` allows
+the target adapter to propose a different sequence while preserving task meaning.
+Neither permits importing a new business rule. Timing samples are not deadlines.
+Low confidence, conflicts and unavailable claims exclude affected steps with
+reason codes. Missing transitions and unknown branches remain explicit. An
+incomplete pattern must not be treated as a complete recipe.
+
+The audit view retains the full source profile, raw locators, artifact references,
+prose claims, methods and uncertainties, with identity maps. The generation view
+uses neutral tokens and a closed vocabulary: no source prose, brand, selectors,
+image references or code is copied. Claim tokens and the profile digest allow an
+authorized reviewer to resolve exact ancestry using the audit. It retains claim
+availability/confidence, conflict groups, exclusion reasons and gap counts; exact
+source-specific gap prose stays in audit. This policy intentionally prefers explicit
+unknowns to a source-content sanitization heuristic.
+
+Coding-agent handoff: supply the generation export plus target context and a
+validated mapping proposal. Keep audit and source artifacts out of the generation
+workspace. An external implementation/test adapter binds semantic roles to target
+controls, executes bounded scenarios, and reports actual results separately from
+expectations. Rendering JSON or Markdown executes no model, browser, implementation,
+or repair loop. The human specification embeds the complete formatted JSON to avoid
+lossy summaries. Treat embedded data as untrusted data, especially the audit view.
