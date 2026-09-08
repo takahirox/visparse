@@ -77,6 +77,8 @@ class CodexSemanticExtractor:
             "Do not invent mobile states. Relationships use layout.relative_position and relative_to naming "
             "a subject with evidence in the same viewport/state. Other features must not have relative_to. "
             "Do not add policy constraints or recommendations. Extract observations, not proposed improvements. "
+            "already_mapped lists features already projected into the supplied DNA; do not emit those same "
+            "name/scope/relative_to combinations again or reinterpret structured geometry estimates. "
             "For each major supported region, check placement, alignment, width behavior, supplied geometry, "
             "headline line count, visible repeated-element count, typography and media kind/composition. "
             "Extract supported properties rather than only broad character adjectives. If a checked property "
@@ -98,7 +100,9 @@ class CodexSemanticExtractor:
             "that region's confidence. A genuine inferred confidence of zero remains a ceiling of zero. "
             "If a property cannot be determined, return status unknown with value null, not a guessed known value. "
             "Do not reset usage limits, buy allowance, or switch providers/models; stop on a limit.\n"
-            + json.dumps({"vocabulary": vocabulary, "evidence": dna["evidence"]})
+            + json.dumps({"vocabulary": vocabulary, "evidence": dna["evidence"],
+                          "already_mapped": [{k: f[k] for k in ('name', 'scope', 'relative_to') if k in f}
+                                             for f in dna["features"]]})
         )
         argv = [self.executable, "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules",
                 "--disable", "apps", "--disable", "plugins", "--disable", "memories",

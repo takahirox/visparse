@@ -27,8 +27,9 @@ from .codex import (
 )
 from .model import MAX_DEPTH, MAX_INPUT_BYTES, MAX_ITEMS, MAX_STRING_LENGTH, SourceEvidence, ValidationError
 from .contracts import check, number
+from .geometry import validate_geometry, validate_region_requests
 
-DESIGN_SCHEMA_VERSION = "0.1"
+DESIGN_SCHEMA_VERSION = "0.2"
 DESIGN_CATEGORIES = frozenset({
     "layout", "visual_hierarchy", "spacing_density", "typography",
     "color_usage", "component_styling", "ui_patterns", "section_rhythm",
@@ -146,8 +147,8 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
         "interpretations", "confidence", "principles", "recommendations",
         "provenance",
     })
-    if profile["schema_version"] != DESIGN_SCHEMA_VERSION:
-        _fail("schema_version", f"expected {DESIGN_SCHEMA_VERSION!r}")
+    if profile["schema_version"] not in ("0.1", DESIGN_SCHEMA_VERSION):
+        _fail("schema_version", "expected '0.1' or '0.2'")
 
     sources = _objects(profile, "sources", nonempty=True)
     measurements = _objects(profile, "measurements")
@@ -217,15 +218,27 @@ def validate_design_profile(profile: Mapping[str, Any]) -> dict[str, Any]:
         _text(item["uncertainty"], f"{path}.uncertainty")
         _text(item["basis"], f"{path}.basis")
 
+    observation_map = {o["id"]: o for o in observations}
+    geometry_keys = set()
     for index, interpretation in enumerate(interpretations):
         path = f"interpretations[{index}]"
-        _exact(interpretation, path, {"id", "observation_ids", "category", "statement", "confidence_id"})
+        _exact(interpretation, path, {"id", "observation_ids", "category", "statement", "confidence_id"},
+               {"geometry"} if profile["schema_version"] == "0.2" else set())
         _references(interpretation["observation_ids"], f"{path}.observation_ids", observation_ids, nonempty=True)
         _category(interpretation["category"], f"{path}.category")
         _text(interpretation["statement"], f"{path}.statement")
         confidence_id = _text(interpretation["confidence_id"], f"{path}.confidence_id")
         if confidence_id not in confidence_ids:
             _fail(f"{path}.confidence_id", f"unknown reference {confidence_id!r}")
+        if "geometry" in interpretation:
+            geometry = interpretation["geometry"]
+            validate_geometry(geometry)
+            check(interpretation["category"] == "layout", "geometry interpretation must use layout category")
+            anchors = {sid for oid in interpretation["observation_ids"] for sid in observation_map[oid]["source_ids"]}
+            check(len(anchors) == 1, "geometry requires exactly one source")
+            key = (next(iter(anchors)), geometry["region"])
+            check(key not in geometry_keys, "duplicate geometry for source and region")
+            geometry_keys.add(key)
 
     for index, principle in enumerate(principles):
         path = f"principles[{index}]"
@@ -358,6 +371,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
     timeout_seconds: float = 300.0
     intent: str = "adapt"
     estimate_geometry: bool = False
+    geometry_regions: Sequence[str] = ()
 
     def analyze(
         self,
@@ -366,6 +380,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
     ) -> dict[str, Any]:
         check(self.intent in ("preserve", "adapt"), "intent must be preserve or adapt")
         check(type(self.estimate_geometry) is bool, "estimate_geometry must be a boolean")
+        validate_region_requests(self.geometry_regions, self.estimate_geometry)
         number(self.timeout_seconds, 1, 900)
         if not references:
             raise ValidationError("at least one reference screenshot is required")
@@ -379,6 +394,7 @@ class CodexDesignAnalyzer(DesignAnalyzer):
                     paths.append(image.name)
             result = self.runner.run(self._argv(paths, self._prompt(
                 references, targets, intent=self.intent, estimate_geometry=self.estimate_geometry,
+                geometry_regions=self.geometry_regions,
             )), timeout=self.timeout_seconds)
         except FileNotFoundError:
             raise CodexUnavailableError("codex executable is unavailable; install Codex CLI or configure executable") from None
@@ -401,6 +417,12 @@ class CodexDesignAnalyzer(DesignAnalyzer):
                 raise ValidationError(
                     "Codex design analysis has no trusted mechanical measurement channel; measurements must be empty"
                 )
+            observations = {o['id']: o for o in profile['observations']}
+            covered = {(sid, i['geometry']['region']) for i in profile['interpretations'] if 'geometry' in i
+                       for oid in i['observation_ids'] for sid in observations[oid]['source_ids']}
+            check(self.estimate_geometry or not covered, "geometry was not requested")
+            missing = sorted({(s.id, region) for s in supplied for region in self.geometry_regions} - covered)
+            check(not missing, f"missing requested geometry (return estimates or explicit unknowns): {missing}")
             return profile
         except (ValidationError, TypeError) as error:
             raise CodexValidationError(f"codex returned invalid design profile: {error}") from None
@@ -417,15 +439,16 @@ class CodexDesignAnalyzer(DesignAnalyzer):
 
     @staticmethod
     def _prompt(references: Sequence[SourceEvidence], targets: Sequence[SourceEvidence], *,
-                intent: str = "adapt", estimate_geometry: bool = False) -> str:
+                intent: str = "adapt", estimate_geometry: bool = False, geometry_regions: Sequence[str] = ()) -> str:
         check(intent in ("preserve", "adapt"), "intent must be preserve or adapt")
         check(type(estimate_geometry) is bool, "estimate_geometry must be a boolean")
+        validate_region_requests(geometry_regions, estimate_geometry)
         geometry = (
             "The caller declares each attachment is a complete single-viewport capture. "
             "Opt-in geometry estimation: for clearly identifiable regions, you may supply approximate "
             "normalized bounds ONLY in interpretations linked to that region's visible observations. "
-            "Use stable neutral region names and the keys geometry.viewport_x_ratio, geometry.viewport_y_ratio, "
-            "geometry.viewport_width_ratio, geometry.viewport_height_ratio in each interpretation statement. "
+            "Use stable neutral region names and put the bounds in the structured geometry field described below, "
+            "rather than relying on numbers embedded in prose. "
             "The origin is the top-left of the complete attached image; x and width divide by image width, "
             "y and height by image height. Each value is between 0 and 1. These are approximate visual "
             "estimates, never measurements, CSS pixels, document coordinates or responsive rules. "
@@ -435,6 +458,17 @@ class CodexDesignAnalyzer(DesignAnalyzer):
             "single viewport, leave its viewport geometry unknown. Prefer major regions and alignment anchors; "
             "do not enumerate a bounding box for every repeated icon. Keep numeric geometry out of observations "
             "and measurements. Precise geometry still requires a separate trusted measurement channel. "
+            "Represent each region's geometry in a layout interpretation with an additional geometry object: "
+            "{region:neutral-id,coordinate_space:'viewport-ratio',bounds:{x:{value:number-or-null,uncertainty:text},"
+            "y:{value:number-or-null,uncertainty:text},width:{value:number-or-null,uncertainty:text},"
+            "height:{value:number-or-null,uncertainty:text}}}. Link observations from exactly one image. "
+            "Each known extent must be positive, and x+width and y+height must not exceed 1. "
+            "Use null with a concrete reason for each unknown bound, including absent or ambiguous regions. "
+            "Include small alignment anchors such as headline blocks, wordmarks and player identity separately "
+            "from their containing sections. Do not replace a requested character with its whole stage. "
+            f"Requested neutral regions are {json.dumps(list(geometry_regions))}. For EVERY supplied image, "
+            "return exactly one geometry interpretation for each requested region, even if all bounds are unknown. "
+            "Do not omit requested regions or combine distinct slots. Never invent a visible region just to meet this list. "
         ) if estimate_geometry else (
             "do not estimate pixel dimensions, distances or numeric ratios. "
             "Obtain precise geometry through a separate measurement channel. "
