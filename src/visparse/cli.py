@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .interaction_evaluation import evaluate_interactions
 from .interaction_mapping import prepare_mapping
 from .interaction_export import export_interactions, render_interactions
 from .interaction_analysis import apply_interaction_analysis, analyze_interactions, CodexInteractionAnalyzer
@@ -60,6 +61,9 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    ux_eval = subparsers.add_parser("ux-evaluate")
+    ux_eval.add_argument("path", help="independent fixture dataset")
+    ux_eval.add_argument("--results", required=True)
     mapping = subparsers.add_parser("ux-map")
     mapping.add_argument("path")
     mapping.add_argument("--patterns", required=True)
@@ -154,6 +158,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "ux-evaluate":
+            result = evaluate_interactions(load_json(_read_bounded(args.path)), load_json(_read_bounded(args.results)))
+            sys.stdout.write(canonical(result))
+            failures = bool(result["invented_behavior_ids"]) or any(m["missing"] or m["wrong"] or m["unsupported_claims"] or m["harness_errors"] for d in result["dimensions"].values() for m in d.values())
+            return 1 if failures else 0
         if args.command == "ux-map":
             values = [load_json(_read_bounded(path)) for path in (args.path, args.patterns, args.target, args.proposal)]
             sys.stdout.write(canonical(prepare_mapping(*values, intent=args.intent, view=args.view)))

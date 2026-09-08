@@ -4,7 +4,8 @@ from __future__ import annotations
 import re
 from .contracts import bounded, canonical, check, items, load_json, number, refs, shape, text, unique
 
-VERSION = "interaction-sequence/0.1"
+VERSION = "interaction-sequence/0.2"
+LEGACY_VERSION = "interaction-sequence/0.1"
 OUTCOMES = {"observed-effect", "observed-no-change", "failed-action", "collection-timeout", "unobserved"}
 ACTIONS = {"click", "fill", "press", "hover", "focus", "scroll", "wait", "reload"}
 KINDS = {"screenshot", "dom", "accessibility", "runtime", "video"}
@@ -24,7 +25,7 @@ def strings(value):
 def validate_sequence(value):
     bounded(value)
     shape(value, {"schema_version", "sessions", "clocks", "captures", "targets", "actions", "expectations", "coverage"})
-    check(value["schema_version"] == VERSION, "unsupported interaction sequence version")
+    check(value["schema_version"] in {VERSION, LEGACY_VERSION}, "unsupported interaction sequence version")
     sessions = unique(array(value["sessions"], 10))
     check(bool(sessions), "at least one session is required")
     for session in sessions.values():
@@ -68,10 +69,20 @@ def validate_sequence(value):
     actions = unique(array(value["actions"], 100))
     previous = {}
     for action in actions.values():
-        shape(action, {"id", "session_id", "clock_id", "start_ms", "end_ms", "order", "kind", "target_id", "input_ref", "before", "feedback", "after", "outcome", "reason"})
+        shape(action, {"id", "session_id", "clock_id", "start_ms", "end_ms", "order", "kind", "target_id", "input_ref", "before", "feedback", "after", "outcome", "reason"} | ({"input_parameters"} if value["schema_version"] == VERSION else set()))
         interval(action)
         check(type(action["order"]) is int and action["order"] >= 0, "invalid action order")
         check(action["kind"] in ACTIONS, "unsupported action")
+        if value["schema_version"] == VERSION:
+            parameters = action["input_parameters"]
+            fields = {"press": {"key"}, "scroll": {"delta"}, "wait": {"wait_ms"}}.get(action["kind"], set())
+            shape(parameters, fields)
+            if action["kind"] == "press":
+                check(parameters["key"] in {"Tab", "Shift+Tab", "Enter", "Escape", "Space", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"}, "unsupported observed key")
+            elif action["kind"] == "scroll":
+                check(len(items(parameters["delta"])) == 2, "scroll requires x/y delta")
+                for delta in parameters["delta"]: number(delta, -4096, 4096)
+            elif action["kind"] == "wait": number(parameters["wait_ms"], 0, 5000)
         if action["target_id"] is not None:
             refs([action["target_id"]], targets)
             check(targets[action["target_id"]]["session_id"] == action["session_id"], "action target crosses session")
@@ -110,7 +121,8 @@ def validate_sequence(value):
     for assertion in array(value["expectations"], 100):
         shape(assertion, {"id", "action_id", "origin", "statement"})
         refs([assertion["action_id"]], actions); text(assertion["origin"]); text(assertion["statement"])
-    unique(value["expectations"])
+    expectation_ids = unique(value["expectations"])
+    check(not set(expectation_ids) & set(all_ids), "expectation ID collides with observed entity")
     shape(value["coverage"], {"scope", "omissions"})
     text(value["coverage"]["scope"]); strings(value["coverage"]["omissions"])
     return value
@@ -122,7 +134,7 @@ def load_sequence(payload):
 
 def summarize_sequence(value):
     validate_sequence(value)
-    return {"schema_version": VERSION, "counts": {key: len(value[key]) for key in ("sessions", "captures", "targets", "actions", "expectations")},
+    return {"schema_version": value["schema_version"], "counts": {key: len(value[key]) for key in ("sessions", "captures", "targets", "actions", "expectations")},
             "available_evidence": sorted({c["kind"] for c in value["captures"]}),
             "outcomes": {outcome: sum(a["outcome"] == outcome for a in value["actions"]) for outcome in sorted(OUTCOMES)},
             "coverage": value["coverage"], "atomic_snapshot": False,

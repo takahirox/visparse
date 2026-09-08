@@ -44,6 +44,12 @@ class ExportTests(unittest.TestCase):
         p["patterns"][0]["steps"].reverse()
         with self.assertRaisesRegex(ValidationError,"recorded action order"):export_interactions(profile,p)
 
+    def test_observed_escape_key_survives_projection_and_export(self):
+        value=sequence(kind='press');value['schema_version']='interaction-sequence/0.2';value['actions'][0]['input_parameters']={'key':'Escape'}
+        profile=apply_interaction_analysis(value,prediction(value));p=patterns(profile)
+        self.assertEqual(profile['projected_actions'][0]['input_parameters'],{'key':'Escape'})
+        self.assertEqual(export_interactions(profile,p)['patterns'][0]['steps'][0]['input_parameters'],{'key':'Escape'})
+
     def test_intent_and_unknowns_remain_explicit(self):
         profile=self.profile();p=patterns(profile)
         out=export_interactions(profile,p,intent='outcome-equivalence')

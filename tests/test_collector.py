@@ -81,3 +81,4 @@ if __name__ == "__main__":
 
 # Keep optional interaction fixtures in the existing browser CI entry point.
 from interaction_collector_tests import PlanTests, SequenceBrowserTests
+from interaction_trial_tests import CrossSiteTrialTests

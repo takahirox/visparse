@@ -30,6 +30,7 @@ class InteractionTests(unittest.TestCase):
             lambda v: v["clocks"][0].update(unit="seconds"),
             lambda v: v["targets"][0].update(session_id="elsewhere"),
             lambda v: v["actions"][0].update(input_ref="secret"),
+            lambda v: v["expectations"][0].update(id="action"),
             lambda v: v["actions"].extend(copy.deepcopy(v["actions"]) * 100)]
         for mutate in mutations:
             value = sequence(); mutate(value)
@@ -39,6 +40,14 @@ class InteractionTests(unittest.TestCase):
         value["captures"][1]["clock_id"] = "other-clock"
         with self.assertRaisesRegex(ValidationError, "not aligned"):
             validate_sequence(value)
+
+    def test_v2_retains_typed_keys_scroll_and_wait_without_inventing_legacy_data(self):
+        for kind,parameters in [('press',{'key':'Escape'}),('scroll',{'delta':[0,200]}),('wait',{'wait_ms':250})]:
+            value=sequence(kind=kind);value['schema_version']='interaction-sequence/0.2';value['actions'][0]['input_parameters']=parameters
+            self.assertEqual(load_sequence(canonical(value))['actions'][0]['input_parameters'],parameters)
+            del value['actions'][0]['input_parameters']
+            with self.assertRaises(ValidationError):validate_sequence(value)
+        self.assertNotIn('input_parameters',validate_sequence(sequence(kind='press'))['actions'][0])
 
     def test_expected_facts_are_separate_and_summary_offline(self):
         value = sequence("unobserved")

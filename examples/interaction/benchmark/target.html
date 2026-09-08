@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Reading room</title>
+<style>body{margin:30px;font:18px Georgia;background:#fff6dd;color:#513421}article{border-bottom:1px solid #99774b;padding:20px}button,input{font:inherit;margin:8px}dialog{background:#fff6dd}#catalog{max-width:700px}</style>
+<body data-storage="reading-list"><h1>Reading room</h1>
+<label>Filter articles <input id="filter"></label><div id="catalog">
+<article data-id="a1"><h2>Growing a city garden</h2><button data-bookmark data-save-label="Bookmark" data-remove-label="Unbookmark">Bookmark</button><button data-detail="a1">Read details</button></article>
+<article data-id="a2"><h2>A guide to bicycles</h2><button data-bookmark data-save-label="Bookmark" data-remove-label="Unbookmark">Bookmark</button><button data-detail="a2">Read details</button></article>
+</div><p id="bookmark-status" role="status"></p>
+<dialog id="detail"><p id="detail-text"></p><button id="dismiss">Done</button></dialog>
+<form id="contact"><label>Contact email <input id="contact-email" type="email" required></label><button id="send">Send</button><button id="cancel-contact" type="button">Cancel</button></form><p id="contact-status"></p>
+<button id="load">Fetch recommendations</button><p id="load-status"></p>
+<script>
+const get=id=>document.getElementById(id);let saved=new Set(JSON.parse(localStorage.getItem(document.body.dataset.storage)||'[]'));
+for(const button of document.querySelectorAll('[data-bookmark]')){const id=button.closest('article').dataset.id;const render=()=>{button.textContent=saved.has(id)?button.dataset.removeLabel:button.dataset.saveLabel;button.setAttribute('aria-pressed',String(saved.has(id)))};button.onclick=()=>{saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem(document.body.dataset.storage,JSON.stringify([...saved]));render()};render()}
+get('filter').oninput=()=>document.querySelectorAll('article').forEach(a=>a.hidden=!a.querySelector('h2').textContent.toLowerCase().includes(get('filter').value.toLowerCase()));
+for(const button of document.querySelectorAll('[data-detail]'))button.onclick=()=>{get('detail-text').textContent=button.closest('article').querySelector('h2').textContent;get('detail').showModal()};get('dismiss').onclick=()=>get('detail').close();
+get('contact').onsubmit=e=>{e.preventDefault();get('contact-status').textContent='Sent'};get('cancel-contact').onclick=()=>{get('contact').reset();get('contact-status').textContent='Cancelled'};
+let attempts=0;get('load').onclick=()=>{get('load-status').textContent='Loading';setTimeout(()=>{get('load-status').textContent=++attempts===1?'Failed; retry':'Loaded'},80)};
+</script></body></html>

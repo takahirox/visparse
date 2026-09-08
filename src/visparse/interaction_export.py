@@ -85,13 +85,13 @@ def export_interactions(profile, patterns, *, intent="sequence-feedback", min_co
             used.add(tid)
             audit.append({"transition": transition_tokens[tid], "claim_refs": sorted(tokens[c] for c in cited), "included": not reasons, "reasons": reasons})
             if not reasons:
-                steps.append({"transition": transition_tokens[tid], "from": state_tokens[transition["from"]], "to": state_tokens.get(transition["to"]),
+                steps.append({**({"input_parameters": action["input_parameters"]} if "input_parameters" in action else {}), "transition": transition_tokens[tid], "from": state_tokens[transition["from"]], "to": state_tokens.get(transition["to"]),
                               "role": step["role"], "input": action["kind"], "parameter": "target-input" if action["input_ref"] else None,
                               "effect": step["effect"], "feedback": step["feedback"], "condition": step["condition"], "claim_refs": sorted(tokens[c] for c in cited),
                               "confidence": min(pattern["confidence"], transition["confidence"]), "observed_order": action["order"],
                               "timing_sample_ms": action["end_ms"] - action["start_ms"], "timing_requirement": None})
         exported.append({"id": f"pattern-{i}", "semantic": pattern["semantic"], "steps": steps, "persistence": pattern["persistence"]["mode"] if len(steps) == len(pattern["steps"]) else "unknown", "complete_recorded_pattern": len(steps) == len(pattern["steps"]), "unrecorded_branches": "unknown"})
-    result = {"schema_version": "interaction-export/0.1", "profile_sha256": profile_digest(profile), "view": view,
+    result = {"schema_version": "interaction-export/0.2" if profile["sequence"]["schema_version"] == "interaction-sequence/0.2" else "interaction-export/0.1", "profile_sha256": profile_digest(profile), "view": view,
               "policy": {"intent": intent, "min_confidence": min_confidence, "source_content": "excluded" if view == "generation" else "retained-for-audit", "timing": "measurement-only"},
               "patterns": exported, "decisions": audit, "unmapped_transitions": [transition_tokens[t] for t in transitions if t not in used],
               "claims": [{"ref": tokens[c], "kind": claims[c]["kind"], "status": claims[c]["status"], "confidence": claims[c]["confidence"]} for c in claims],

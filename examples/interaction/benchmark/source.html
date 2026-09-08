@@ -1,0 +1,20 @@
+<!doctype html><html><meta charset="utf-8"><title>Controlled source fixture</title>
+<style>body{font:18px sans-serif;background:#edf3ff}dialog{border:2px solid navy}#status{min-height:2em}</style>
+<button id="open">Open details</button><dialog id="dialog"><button id="close">Close</button><p>Details</p></dialog>
+<form id="form"><label>Email <input id="email" type="email" required></label><button id="submit">Submit</button><button id="cancel" type="button">Cancel</button></form>
+<button id="save">Save item</button><button id="noop">No change</button><button id="delayed">Load</button><a id="escape" href="/outside">Outside scope</a>
+<div role="tablist"><button id="tab-one" role="tab" aria-selected="true">Overview</button><button id="tab-two" role="tab" aria-selected="false">More</button></div><p id="tab-panel">Overview panel</p><label>Filter <input id="source-filter"></label><ul><li data-source-item>Apple</li><li data-source-item>Pear</li></ul><button id="retry">Request data</button><p id="retry-status"></p>
+<p id="status" role="status"></p><div style="height:1000px">Scrollable content</div>
+<script>
+const $=id=>document.getElementById(id); const status=$('status');
+$('open').onclick=()=>$('dialog').showModal(); $('close').onclick=()=>$('dialog').close();
+$('form').onsubmit=e=>{e.preventDefault();status.textContent='Submitted'};
+$('cancel').onclick=()=>{$('form').reset();status.textContent='Cancelled'};
+const saved=()=>{$('save').setAttribute('aria-pressed',String(localStorage.getItem('saved')==='yes'));$('save').textContent=localStorage.getItem('saved')==='yes'?'Remove saved item':'Save item'};
+$('save').onclick=()=>{localStorage.getItem('saved')==='yes'?localStorage.removeItem('saved'):localStorage.setItem('saved','yes');saved()};saved();
+$('delayed').onclick=()=>{status.textContent='Loading';setTimeout(()=>status.textContent='Loaded',500)};
+$('tab-one').onclick=()=>{$('tab-one').setAttribute('aria-selected','true');$('tab-two').setAttribute('aria-selected','false');$('tab-panel').textContent='Overview panel'};
+$('tab-two').onclick=()=>{$('tab-one').setAttribute('aria-selected','false');$('tab-two').setAttribute('aria-selected','true');$('tab-panel').textContent='More panel'};
+$('source-filter').oninput=()=>document.querySelectorAll('[data-source-item]').forEach(e=>e.hidden=!e.textContent.toLowerCase().includes($('source-filter').value.toLowerCase()));
+let attempts=0;$('retry').onclick=()=>{$('retry-status').textContent='Loading';setTimeout(()=>$('retry-status').textContent=++attempts===1?'Failed':'Succeeded',80)};
+</script></html>

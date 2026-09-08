@@ -1,10 +1,10 @@
 # Interaction evidence and transfer
 
 The UX pipeline is separate from image records, inspection bundles, and Design DNA.
-Its first stable boundary is `interaction-sequence/0.1`. No implicit conversion or
+The collector emits `interaction-sequence/0.2`; legacy `interaction-sequence/0.1` remains readable. No implicit conversion or
 upgrade of legacy records occurs. Unknown versions and unknown fields in typed
 objects are rejected; raw capture `data` is bounded opaque JSON. Future incompatible
-changes require a new version. All JSON uses the existing 1 MiB contract limit.
+changes require a new version. All JSON uses the existing 1,000,000-byte contract limit.
 
 ```sh
 visparse ux-validate examples/interaction/sequence.json
@@ -97,7 +97,7 @@ by failed collection/execution. Timing samples remain mechanical measurements;
 pacing is an interpretation. Target requirements belong to the later mapping layer.
 
 Conflicts remain as cited pairs with reasons; gaps remain explicit. Limits are 200
-states, 500 claims, 100 transitions and 100 conflicts within 1 MiB. Validators reject
+states, 500 claims, 100 transitions and 100 conflicts within 1,000,000 bytes. Validators reject
 fabricated IDs, modified projections, unknown versions and inconsistent ancestry;
 they cannot prove the truth of a prose interpretation that cites real evidence.
 Independent behavioral fixtures assess that separate semantic failure mode.
@@ -189,3 +189,80 @@ actual controls, check all target invariants, and report actual execution result
 No source selectors or coordinates are used for matching. The audit view retains
 source ancestry and the original proposal. A separate evaluation fixture exercises
 cross-content execution; a valid proposal alone does not prove target behavior.
+
+## Independent evaluation and controlled trial
+
+```sh
+visparse ux-evaluate examples/interaction/benchmark/dataset.json --results examples/interaction/benchmark/stored-run.json
+# Optional local execution; install collector and Chromium first.
+PYTHONPATH=src python examples/interaction/run_trial.py --output artifacts/ux-trial
+```
+
+`interaction-dataset/0.1` contains independently authored expected cases, their
+origin, dimension and recorded/held-out partition. `interaction-evaluation-run/0.1`
+contains actual observations, unknowns or harness errors with evidence digests and
+explicit analyzer/generator input lists. `interaction-evaluation/0.1` reports capture,
+analysis, export, behavior, target preservation and appearance separately. Each has
+recorded and held-out counts, missing/wrong behavior, unsupported assertions,
+correct unknowns and harness failures. Invented behavior IDs are separate. Harness
+failures are excluded from application scores but remain visible and make the CLI
+return 1; omitted expected cases count as missed. No aggregate score hides losses.
+An unsupported adapter has no scored observations. Maximum 500 cases, 1,000 results,
+500 evidence references and 30 runs, subject to the core JSON limit.
+
+Input manifests reject oracle/held-out inputs for analysis or generation. Generation
+accepts neutral exports and target context/code only, never source code/images/video.
+Evidence-kind declarations must match each ablation condition. Digest validation in
+the core is structural; the browser integration and archived-evidence tests also
+verify actual bytes. This is a reproducible protocol, not a security sandbox for an
+arbitrary third-party generator. The fixture adapter's code is small and audited.
+
+The version-2 [independent oracle](../examples/interaction/benchmark/ORACLE.md) was
+fixed before the version-2 execution. It includes save/reload/remove, tabs, modal
+focus/cancel, invalid/corrected form, filtering, delayed failure/retry, sampled no
+change and missing selector cases. Source and target use different content and
+appearance. The target's existing tasks/data/invariants are declared separately.
+The external deterministic adapter receives only handoff JSON and target HTML;
+source artifacts and the oracle are outside its input directory. It transfers the
+bounded save/remove/reload implementation; other target tasks remain independently
+implemented and are tested as preservation obligations.
+
+Four full runs (two per 800×600 and 390×844 viewport) passed all 19 declared cases
+each: 3 capture, 2 analysis, 1 export, 3 recorded transfer, 1 held-out source-fixture
+case, 8 target preservation and 1 appearance case. Initial-state target screenshots
+and catalog geometry matched the baseline exactly. This appearance test measures
+preservation, not similarity to the source design. Saved items remain independent
+across removal/reload; existing dialog, form, retry, filtering and catalog data pass.
+
+These are **deterministic fixture results, not live-model accuracy measurements**.
+The analysis adapter reads captured pressed-state evidence using a fixture-specific
+annotation rule. Screenshots-only stored abstention baselines run twice per viewport;
+they intentionally return unknown for temporal behavior. Their scores demonstrate
+missing-evidence accounting, not that one model/evidence condition outperforms another.
+Video+actions is explicitly unsupported. Future live-model comparisons must pin the
+same provider/prompt/target conditions and repeat within each viewport. Do not retry,
+reset allowance, buy capacity or switch providers to bypass a limit.
+
+Per-run input manifests, captures, PNGs, predictions, handoffs, generated HTML,
+baseline/target/source execution and reports are published in
+[`evidence-v2.zip`](../examples/interaction/benchmark/evidence-v2.zip), with
+[`evidence-sha256.txt`](../examples/interaction/benchmark/evidence-sha256.txt) and
+[`summary.json`](../examples/interaction/benchmark/summary.json). Offline tests verify
+the archive and each referenced input, then reproduce the reports. Optional browser
+CI reruns the trial and closes every browser/context/server on success or failure.
+The previous Kirka/Kraft visual experiments are not evidence of those real sites' UX.
+
+
+### Operation-parameter compatibility
+
+Sequence 0.2 requires `input_parameters` on every action: `{"key":"Escape"}`
+for press, `{"delta":[0,200]}` for scroll, `{"wait_ms":250}` for a recorded wait,
+and `{}` for other actions. Keys and numerical bounds use the collector's explicit
+allowlists. Fill values remain redacted parameter references. Projection, generation
+export 0.2 and mapping scenarios retain these typed details. A recorded wait is an
+input in the observed sequence, not an inferred target response-time requirement.
+
+Legacy sequence 0.1 remains unchanged, with no invented key, scroll distance or wait.
+Its exports stay version 0.1. Mapping a legacy press/scroll/wait cannot be marked
+compatible when its parameters are unavailable. Capture again or supply a valid
+0.2 record with actual evidence; never assume Escape/Enter from UI conventions.

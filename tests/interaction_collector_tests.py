@@ -64,6 +64,8 @@ class SequenceBrowserTests(unittest.TestCase):
                 self.assertTrue(all(a['outcome'].startswith('observed-') for a in result['actions']))
                 self.assertNotIn('private@example.test', json.dumps(result))
                 self.assertTrue(result['actions'][10]['feedback'])
+                self.assertEqual(result['actions'][1]['input_parameters'],{'key':'Escape'})
+                self.assertEqual(result['actions'][-1]['input_parameters'],{'delta':[0,200]})
                 for capture in result['captures']:
                     if capture['artifact']:
                         digest=capture['artifact']['sha256'];self.assertEqual(hashlib.sha256((Path(directory)/(digest+'.png')).read_bytes()).hexdigest(),digest)

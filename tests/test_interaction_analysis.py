@@ -40,6 +40,20 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(len(result['inference']['states']),2);self.assertEqual(len(result['inference']['conflicts']),1)
         p['states'][0]['capture_ids']=['before','after'];p['states']=p['states'][:1];p['transitions'][0]['to']='unsaved'
         self.assertEqual(len(apply_interaction_analysis(s,p)['inference']['states']),1)
+    def test_supplied_tab_dialog_form_focus_cancel_and_retry_states_are_grounded(self):
+        for component,kind,claim_kind,effect in [('tabs','click','state','selected'),('dialog','click','outcome','visible'),('dialog','press','cancel','hidden'),('form','click','feedback','invalid'),('form','fill','state','corrected'),('dialog','focus','focus','dismiss control focused'),('request','click','recovery','retry succeeded')]:
+            s=sequence(kind=kind)
+            if kind=='fill':s['actions'][0]['input_ref']='fixture:email'
+            s['captures'][1]['data']={'fixture_component':component,'fixture_effect':effect}
+            p=prediction(s);p['states'][0]['component']=component;p['states'][1].update(component=component,label=effect)
+            p['claims'][0].update(kind=claim_kind,subject=component,value=effect)
+            result=apply_interaction_analysis(s,p)
+            self.assertEqual(result['inference']['claims'][0]['value'],effect)
+            self.assertEqual(result['projected_actions'][0]['before'],['before'])
+            self.assertEqual(result['projected_actions'][0]['after'],['after'])
+            p['states'][1]['capture_ids']=['before']
+            with self.assertRaisesRegex(ValidationError,'after evidence'):apply_interaction_analysis(s,p)
+
     def test_adapter_preflight_single_call_and_failure(self):
         s=sequence();runner=Mock();runner.run.return_value=ProcessResult(0,canonical(prediction(s)), '')
         self.assertEqual(analyze_interactions(s,CodexInteractionAnalyzer(runner=runner))['schema_version'],VERSION)
