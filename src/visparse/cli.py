@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .interaction import load_sequence, summarize_sequence
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
 from .design import CodexDesignAnalyzer, normalize_design_profile
@@ -49,7 +50,7 @@ def _json_line(value: object) -> str:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="visparse", description="Validate and inspect Visparse JSON")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for name in ("validate", "normalize", "summarize", "evaluate"):
+    for name in ("validate", "normalize", "summarize", "evaluate", "ux-validate", "ux-summary"):
         command = subparsers.add_parser(name)
         command.add_argument("path", help="JSON path, or - for standard input")
     for name in ("inspect", "inspect-summary"):
@@ -132,6 +133,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command in {"ux-validate", "ux-summary"}:
+            sequence = load_sequence(_read_bounded(args.path))
+            sys.stdout.write(canonical(summarize_sequence(sequence) if args.command == "ux-summary" else {"valid": True, "schema_version": sequence["schema_version"]}))
+            return 0
         if args.command == "design-trace":
             result = trace_guidance(load_dna(_read_bounded(args.path)), min_confidence=args.min_confidence,
                 generation_safe=args.generation_safe, intent=args.intent)
