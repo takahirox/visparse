@@ -131,7 +131,7 @@ flowchart TD
 
 Playwrightの収集、Crawljaxの探索、XStateの実行意味論をすべてVisparseに内蔵する必要はない。既存の外部収集・プロバイダー非依存・証拠と推定の分離を保つ。生成側の修正ループは将来の統合ヒントとして扱う。
 
-初期調査に続き、2026-09-08に以下のIssueを登録した。実装・PR作成はまだ行っていない。最初の成果物は、状態・遷移を持つ小さな合成fixtureと独立した期待結果とする。
+初期調査に続き、2026-09-08に以下のIssueを登録した。初期実装はPR [#46](https://github.com/takahirox/visparse/pull/46)、[#47](https://github.com/takahirox/visparse/pull/47)、[#48](https://github.com/takahirox/visparse/pull/48)、[#49](https://github.com/takahirox/visparse/pull/49)、[#50](https://github.com/takahirox/visparse/pull/50)、[#51](https://github.com/takahirox/visparse/pull/51)で具体化した。確定した契約・使い方・合成fixtureによる横断実験の結果と制限は[実装ドキュメント](interactions.md)を参照。本文の研究提案と、ライブモデルの品質を測定していない固定fixtureの検証結果は区別する。
 
 | Issue | 範囲 |
 | --- | --- |

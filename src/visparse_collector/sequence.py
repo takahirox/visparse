@@ -87,7 +87,7 @@ async def _record(plan, directory):
     start = time.monotonic()
     now = lambda: (time.monotonic() - start) * 1000
     base = {"session_id": "session", "clock_id": "clock"}
-    bundle = {"schema_version": "interaction-sequence/0.1", "sessions": [{"id": "session", "reset": "fresh browser context; empty cookies and storage; reload retains same context", "viewport": plan["viewport"], "input_modality": "pointer-keyboard", "origin": plan["url"]}],
+    bundle = {"schema_version": "interaction-sequence/0.2", "sessions": [{"id": "session", "reset": "fresh browser context; empty cookies and storage; reload retains same context", "viewport": plan["viewport"], "input_modality": "pointer-keyboard", "origin": plan["url"]}],
               "clocks": [{"id": "clock", "session_id": "session", "unit": "ms", "basis": "collector monotonic", "method": "time.monotonic around non-atomic reads"}],
               "captures": [], "targets": [], "actions": [], "expectations": [],
               "coverage": {"scope": "explicit supplied plan only", "omissions": ["Frames, shadow DOM, Canvas/WebGL semantics and unsampled transients unavailable", "DOM limited to 200 nodes; AX depth 3; input values redacted", "Screenshots, DOM and AX are sequential non-atomic observations"]}}
@@ -159,6 +159,7 @@ async def _record(plan, directory):
                             bundle["targets"].append({"id": target_id, "session_id": "session", "capture_ids": before, "locator": step["selector"]})
                         t0 = now()
                         action = dict(base, id=f"action-{i}", start_ms=t0, end_ms=t0, order=i, kind=step["kind"], target_id=target_id, input_ref=step["input_ref"], before=before, feedback=[], after=[], outcome="unobserved", reason="post-state not collected")
+                        action["input_parameters"] = {"key": step["key"]} if step["kind"] == "press" else {"delta": step["delta"]} if step["kind"] == "scroll" else {"wait_ms": step["wait_ms"]} if step["kind"] == "wait" else {}
                         bundle["actions"].append(action)
                         try:
                             locator = page.locator(step["selector"]) if target_id else None

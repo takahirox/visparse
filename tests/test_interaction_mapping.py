@@ -41,6 +41,16 @@ class MappingTests(unittest.TestCase):
         proposal["bindings"][0]["status"]="insufficient-evidence"
         self.assertFalse(prepare_mapping(profile,p,target,proposal)["bindings"][0]["ready"])
 
+    def test_legacy_missing_operation_parameters_are_not_execution_ready(self):
+        from visparse.interaction_analysis import apply_interaction_analysis,sequence_digest
+        from visparse.interaction_export import profile_digest
+        profile,p,target,proposal=mapping_fixture()
+        profile['sequence']['actions'][0]['kind']='press'
+        profile['inference']['sequence_sha256']=sequence_digest(profile['sequence'])
+        profile=apply_interaction_analysis(profile['sequence'],profile['inference']);p['profile_sha256']=profile_digest(profile)
+        proposal['source_sha256']=digest(export_interactions(profile,p))
+        with self.assertRaisesRegex(ValidationError,'input-parameters-unavailable'):prepare_mapping(profile,p,target,proposal)
+
     def test_intent_hash_and_invariants_are_enforced(self):
         args=list(mapping_fixture());args[3]['bindings'][0]['adaptations']=['change-feedback'];args[3]['bindings'][0]['status']='qualified-partial'
         with self.assertRaisesRegex(ValidationError,'order and feedback'):prepare_mapping(*args)

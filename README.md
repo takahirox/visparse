@@ -29,6 +29,23 @@ PYTHONPATH=src python -m visparse evaluate examples/evaluation_fixture.json
 
 The evidence CLI commands include `analyze`, `analyze-design`, `inspect`, `inspect-summary`, `inspect-capabilities`, `validate`, `normalize`, `summarize`, and `evaluate`; the design workflow commands are described below. Commands that consume JSON accept a path or `-` for standard input. Normalization writes UTF-8 canonical JSON with sorted keys and no insignificant whitespace.
 
+## Analyze and transfer observed interactions
+
+The separate UX workflow captures explicit action sequences, validates evidence,
+extracts attributed states/transitions, exports neutral behavior patterns, and checks
+caller-supplied target mappings. It preserves unknowns and target task/data semantics.
+
+```sh
+visparse ux-analyze examples/interaction/sequence.json --predictions examples/interaction/prediction.json
+visparse ux-evaluate examples/interaction/benchmark/dataset.json --results examples/interaction/benchmark/stored-run.json
+```
+
+See [interaction contracts, collection, transfer and evaluation](docs/interactions.md).
+Offline commands need no browser or model. Optional collection uses Playwright;
+explicit live analysis uses the existing Codex adapter. The published cross-site
+benchmark is a deterministic fixture trial, not a measurement of live-model UX
+reconstruction quality or the real Kirka/Kraft websites.
+
 ## Analyze an image end to end
 
 Image analysis uses an installed and authenticated local Codex CLI with its saved ChatGPT/Codex login. This adapter does not require an OpenAI API key.

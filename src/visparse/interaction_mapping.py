@@ -93,6 +93,7 @@ def prepare_mapping(profile, patterns, target, proposal, *, intent="sequence-fee
                 if role in source_roles and task[field]!="supported": issues.append(field+"-conflict")
         if set(role_map)!=source_roles: issues.append("unmapped-source-roles")
         if not pattern["complete_recorded_pattern"]: issues.append("incomplete-source-pattern")
+        if any(s["input"] in {"press", "scroll", "wait"} and "input_parameters" not in s for s in pattern["steps"]): issues.append("input-parameters-unavailable")
         if any(s["effect"] == "unknown" or s["to"] is None for s in pattern["steps"]): issues.append("source-outcome-unknown")
         if binding["confidence"] < .6: issues.append("low-confidence")
         if task:
@@ -120,7 +121,7 @@ def prepare_mapping(profile, patterns, target, proposal, *, intent="sequence-fee
         executable=status=="compatible" # partial proposals always require external resolution
         results.append({"pattern_id":pid,"task_id":binding['task_id'],"status":status,"roles":role_map,"adaptations":binding['adaptations'],"requirement_ids":binding['requirement_ids'],"issues":issues,"confidence":binding['confidence'],"ready":executable,"unmapped_roles":sorted(source_roles-set(role_map))})
         if task:
-            scenarios.append({"task_id":task['id'],"pattern_id":pid,"ready":executable,"steps":[{"role":role_map.get(s['role']),"input":s['input'],"expected_effect":s['effect'],"condition":s['condition'],"feedback":s['feedback'],"source_transition":s['transition']} for s in pattern['steps']],"persistence":task['persistence'],"cancellation":task['cancellation'],"recovery":task['recovery']})
+            scenarios.append({"task_id":task['id'],"pattern_id":pid,"ready":executable,"steps":[{**({"input_parameters": s["input_parameters"]} if "input_parameters" in s else {}), "role":role_map.get(s['role']),"input":s['input'],"expected_effect":s['effect'],"condition":s['condition'],"feedback":s['feedback'],"source_transition":s['transition']} for s in pattern['steps']],"persistence":task['persistence'],"cancellation":task['cancellation'],"recovery":task['recovery']})
     result={"schema_version":"interaction-handoff/0.1","intent":intent,"source_export":source,"target_inventory":target,"bindings":results,"verification_scenarios":scenarios,
             "preservation":{"task_ids":list(tasks),"entity_sha256":{e['id']:digest(e) for e in target['entities']},"invariant_ids":[v['id'] for v in target['invariants']]},
             "unmapped_target_tasks":sorted(set(tasks)-{r['task_id'] for r in results if r['task_id']}),"new_capabilities_implemented":False}

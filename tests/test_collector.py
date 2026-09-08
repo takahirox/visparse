@@ -16,6 +16,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from visparse import ValidationError, build_dna, compare_design, render_design, validate_inspection
 from visparse_collector.browser import CaptureOptions, capture, validate_url
 
+# Include optional UX cases for both unittest discovery and direct execution.
+from interaction_collector_tests import PlanTests, SequenceBrowserTests
+from interaction_trial_tests import CrossSiteTrialTests
+
 
 class CollectorConfigurationTests(unittest.TestCase):
     def test_rejects_non_http_credentials_and_invalid_limits_before_browser(self):
@@ -78,6 +82,3 @@ class BrowserIntegrationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-# Keep optional interaction fixtures in the existing browser CI entry point.
-from interaction_collector_tests import PlanTests, SequenceBrowserTests

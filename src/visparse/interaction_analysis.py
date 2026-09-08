@@ -21,7 +21,7 @@ def sequence_digest(sequence):
 
 def project_actions(sequence):
     validate_sequence(sequence)
-    return [{"action_id": a["id"], "kind": a["kind"], "target_id": a["target_id"], "before": a["before"], "feedback": a["feedback"], "after": a["after"],
+    return [{**({"input_parameters": copy.deepcopy(a["input_parameters"])} if "input_parameters" in a else {}), "action_id": a["id"], "kind": a["kind"], "target_id": a["target_id"], "before": a["before"], "feedback": a["feedback"], "after": a["after"],
              "outcome": a["outcome"], "reason": a["reason"], "timing_sample": {"value": a["end_ms"] - a["start_ms"], "unit": "ms", "clock_id": a["clock_id"], "meaning": "collector action interval, not a design requirement"}} for a in sequence["actions"]]
 
 
