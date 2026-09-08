@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from .interaction_analysis import apply_interaction_analysis, analyze_interactions, CodexInteractionAnalyzer
 from .interaction import load_sequence, summarize_sequence
 from .evaluation import evaluate_fixture, load_fixture
 from .codex import CodexAnalyzer, CodexAnalyzerError
@@ -57,6 +58,10 @@ def _parser() -> argparse.ArgumentParser:
         command = subparsers.add_parser(name)
         command.add_argument("path", help="inspection bundle path, or - for standard input")
     subparsers.add_parser("inspect-capabilities")
+    ux = subparsers.add_parser("ux-analyze")
+    ux.add_argument("path")
+    ux.add_argument("--predictions", help="stored predictions; omit to invoke explicit Codex adapter")
+    ux.add_argument("--timeout-seconds", type=float, default=300)
     trace = subparsers.add_parser("design-trace")
     trace.add_argument("path", help="DNA to trace into generation guidance")
     trace.add_argument("--min-confidence", type=float, default=0.6)
@@ -133,6 +138,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI, returning 0 on success, 1 on failed evaluation, or 2 on error."""
     args = _parser().parse_args(argv)
     try:
+        if args.command == "ux-analyze":
+            sequence = load_sequence(_read_bounded(args.path))
+            result = apply_interaction_analysis(sequence, load_json(_read_bounded(args.predictions))) if args.predictions else analyze_interactions(sequence, CodexInteractionAnalyzer(timeout_seconds=args.timeout_seconds))
+            sys.stdout.write(canonical(result))
+            return 0
         if args.command in {"ux-validate", "ux-summary"}:
             sequence = load_sequence(_read_bounded(args.path))
             sys.stdout.write(canonical(summarize_sequence(sequence) if args.command == "ux-summary" else {"valid": True, "schema_version": sequence["schema_version"]}))
