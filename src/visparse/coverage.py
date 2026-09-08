@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections import Counter
 
 from .contracts import bounded, check, number, refs, shape, text, unique
-from .dna import FEATURES, feature_key, group_status, validate_dna, validate_scope
+from .dna import FEATURES, MEDIA_RELATIONS, feature_key, group_status, validate_dna, validate_scope
 
 
 def audit_coverage(dna: dict, expectations: dict, *, min_confidence: float = 0.6) -> dict:
@@ -28,7 +28,7 @@ def audit_coverage(dna: dict, expectations: dict, *, min_confidence: float = 0.6
         check(all(evidence[eid]['scope'] == item['scope'] for eid in item['evidence_ids']),
               'expectation/evidence scope mismatch')
         target = item.get('relative_to')
-        if item['name'] == 'layout.relative_position':
+        if item['name'] == 'layout.relative_position' or item['name'] in MEDIA_RELATIONS:
             check(isinstance(target, str) and target != item['scope']['subject'], 'invalid relationship target')
             check(any(e['scope'] == {**item['scope'], 'subject': target} for e in evidence.values()),
                   'relationship target missing in same viewport/state')
