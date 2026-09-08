@@ -1,11 +1,15 @@
 import copy
 import json
 import unittest
+from pathlib import Path
 from unittest.mock import Mock
 
 from test_design import FakeRunner, evidence, profile
 from test_structured_geometry import geometry_profile
 from visparse.codex import CodexValidationError, ProcessResult
+from visparse.analysis_eval import evaluate_analysis
+from visparse.compare import compare_design
+from visparse.coverage import audit_coverage
 from visparse.design import CodexDesignAnalyzer, validate_design_profile
 from visparse.dna import build_dna, feature_key, validate_dna
 from visparse.model import ValidationError
@@ -38,6 +42,17 @@ def details_profile():
 
 
 class VisualDetailsTests(unittest.TestCase):
+    def test_checked_in_example_projects_all_three_extensions(self):
+        path = Path(__file__).resolve().parents[1] / 'examples/design/visual-details-profile.json'
+        value = json.loads(path.read_text())
+        dna = build_dna(value)
+        names = {f['name'] for f in dna['features']}
+        self.assertTrue({'color.background_hex', 'geometry.full_viewport_width_ratio', 'imagery.subject_kind'} <= names)
+        output = render_design(dna, generation_safe=True, intent='preserve')
+        self.assertIn('geometry.full_viewport_width_ratio', output)
+        self.assertIn('unknown', output)
+        self.assertIn('imagery.subject_kind: table', output)
+
     def test_legacy_versions_and_new_vocabulary_are_explicit(self):
         for version in ('0.1', '0.2'):
             old = profile([evidence('source')]); old['schema_version'] = version
@@ -197,6 +212,52 @@ class VisualDetailsTests(unittest.TestCase):
         runner = FakeRunner(ProcessResult(0, json.dumps(details_profile()), ''))
         with self.assertRaisesRegex(CodexValidationError, 'media geometry was not requested'):
             CodexDesignAnalyzer(runner=runner).analyze([evidence('source')])
+
+    def test_requests_cover_target_images_and_target_details_do_not_project(self):
+        value = details_profile()
+        value['sources'].append({'id': 'target', 'kind': 'screenshot', 'locator': 'memory://target', 'role': 'target'})
+        value['provenance']['inputs'].append('target')
+        value['observations'].append({'id': 'target-observation', 'source_ids': ['target'], 'category': 'layout', 'statement': 'Target region.'})
+        analyzer = CodexDesignAnalyzer(estimate_geometry=True, appearance_regions=('headline',), media_regions=('hero-photo',))
+        for extension, index in (('appearance', 0), ('media', 1)):
+            analyzer.runner = FakeRunner(ProcessResult(0, json.dumps(value), ''))
+            with self.assertRaisesRegex(CodexValidationError, 'missing requested ' + extension + '.*target'):
+                analyzer.analyze([evidence('source')], [evidence('target')])
+            record = copy.deepcopy(value['interpretations'][index])
+            record.update(id='target-' + extension, observation_ids=['target-observation'])
+            value['interpretations'].append(record)
+        analyzer.runner = FakeRunner(ProcessResult(0, json.dumps(value), ''))
+        analyzer.analyze([evidence('source')], [evidence('target')])
+        self.assertEqual(build_dna(value)['features'], build_dna(details_profile())['features'])
+
+    def test_media_coverage_and_comparison_use_enclosing_region(self):
+        dna = build_dna(details_profile())
+        feature = next(f for f in dna['features'] if f['name'] == 'imagery.subject_width_ratio')
+        expected = {'schema_version': '0.1', 'items': [dict(id='width', name=feature['name'],
+            scope=feature['scope'], relative_to=feature['relative_to'], source_status='supported', evidence_ids=feature['evidence_ids'])]}
+        self.assertEqual(audit_coverage(dna, expected)['counts'], {'covered': 1})
+        generated = copy.deepcopy(dna)
+        next(f for f in generated['features'] if f['id'] == feature['id'])['value'] = .1
+        report = compare_design(dna, generated)
+        row = next(f for f in report['dimensions']['imagery_grammar']['features'] if f['name'] == feature['name'])
+        self.assertEqual(row['relative_to'], 'hero-photo')
+        self.assertEqual(row['reason'], 'compared')
+        self.assertLess(row['score'], 1)
+        dna['features'].append({**copy.deepcopy(feature), 'id': 'contradiction', 'value': .6})
+        self.assertEqual(audit_coverage(dna, expected)['counts'], {'conflict': 1})
+
+    def test_evaluation_accepts_positive_factor_but_rejects_unframed_relationships(self):
+        dna = build_dna(details_profile())
+        feature = next(f for f in dna['features'] if f['name'] == 'typography.line_height_factor')
+        expected = dict(id='factor', name=feature['name'], scope=feature['scope'], unit='ratio',
+                        kind='interpretive', tolerance=.1, annotations=[{'annotator': 'fixture-author', 'value': 1.1}])
+        fixture = {'schema_version': '0.1', 'items': [{'id': 'example', 'evidence': dna, 'expected': [expected],
+                   'provenance': 'Synthetic contract example, not a live visual accuracy judgment.'}], 'predictions': []}
+        evaluate_analysis(fixture)
+        expected['unit'] = 'px'
+        with self.assertRaises(ValidationError): evaluate_analysis(fixture)
+        expected.update(name='imagery.subject_width_ratio', unit='ratio')
+        with self.assertRaisesRegex(ValidationError, 'design-compare'): evaluate_analysis(fixture)
 
     def test_semantic_stage_preserves_all_directly_projected_details(self):
         dna = build_dna(details_profile())

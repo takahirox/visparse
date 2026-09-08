@@ -10,7 +10,7 @@ from .contracts import check, number
 from .dna import DIMENSIONS, FEATURES, feature_groups, group_status, validate_dna
 from .safe_scope import scope_labels, safe_scope, safe_subject
 
-RENDER_POLICY_VERSION = "0.2"
+RENDER_POLICY_VERSION = "0.3"
 INTENTS = {"preserve", "adapt"}
 
 

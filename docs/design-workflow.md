@@ -205,7 +205,7 @@ Different sampling coverage must be considered when interpreting comparisons.
 
 ## DESIGN.md rendering
 
-The renderer uses versioned policy `0.1`. A rule identifies its origin, confidence,
+The renderer uses versioned policy `0.3`. A rule identifies its origin, confidence,
 and scope. Default minimum inference confidence is 0.6. Compact and full modes
 preserve the same effective rules; full adds evidence IDs and methods. Missing,
 low-confidence, conflicting, and not-applicable values produce known gaps.

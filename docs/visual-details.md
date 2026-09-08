@@ -4,6 +4,11 @@ Design Profile **0.3** adds regional appearance and media composition, and exten
 geometry with visibility and separate full-element estimates. Profiles 0.1 and
 0.2 remain readable with their original contracts. DNA schema remains 0.1; the new
 feature vocabulary is **0.5**, with older vocabularies still accepted.
+Rendering policy is **0.3**, with explicit coordinate-frame and estimate wording.
+
+A complete [synthetic profile](../examples/design/visual-details-profile.json)
+demonstrates all three extensions. Its values are illustrative, not a visual
+accuracy benchmark.
 
 ```sh
 visparse analyze-design viewport.png --intent preserve --estimate-geometry \
@@ -122,6 +127,10 @@ enclosing media region. `imagery.composition_coverage` belongs to the media itse
 Identical subject names inside different media stay distinct. Controlled subject
 kinds survive generation-safe scope aliasing, so consumers retain the difference
 between, for example, a table and a group of people.
+
+`design-coverage` audits these features with their enclosing region. Compare
+media-local claims through `design-compare`; `eval-analysis` currently has no
+relationship-target field and rejects them rather than dropping the frame.
 
 ## Output and limits
 

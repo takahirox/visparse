@@ -7,7 +7,7 @@ import statistics
 from collections import Counter
 
 from .contracts import bounded, check, items, number, refs, shape, text, unique
-from .dna import DIMENSIONS, FEATURES, feature_groups, feature_key, group_status, validate_dna, validate_scope, validate_value
+from .dna import DIMENSIONS, FEATURES, MEDIA_RELATIONS, feature_groups, feature_key, group_status, validate_dna, validate_scope, validate_unit, validate_value
 from .model import ValidationError
 
 
@@ -43,9 +43,9 @@ def _validate_fixture(fixture):
         for claim in expected.values():
             shape(claim, {"id", "name", "scope", "unit", "kind", "tolerance", "annotations"})
             check(claim["name"] in FEATURES, "unsupported expected feature")
-            check(claim["name"] != "layout.relative_position", "relationship evaluation requires design-compare with scoped targets")
-            spec = FEATURES[claim["name"]]
-            validate_value(claim["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" else 0), claim["unit"])
+            check(claim["name"] != "layout.relative_position" and claim["name"] not in MEDIA_RELATIONS,
+                  "relationship evaluation requires design-compare with scoped targets")
+            validate_unit(claim["name"], claim["unit"])
             validate_scope(claim["scope"])
             check(claim["kind"] in {"grounding", "interpretive"}, "invalid evaluation kind")
             number(claim["tolerance"], 0)

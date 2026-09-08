@@ -117,11 +117,16 @@ def feature_key(feature: dict) -> str:
     return canonical(parts).strip()
 
 
-def validate_value(name: str, value: Any, unit: Any) -> None:
+def validate_unit(name: str, unit: Any) -> None:
     check(name in FEATURES, f"unsupported feature: {name}")
-    _, kind, choices, _ = FEATURES[name]
+    kind = FEATURES[name][1]
     expected_unit = None if kind in {"text", "enum", "number", "color", "count"} else kind
     check(unit == expected_unit, f"{name}: expected unit {expected_unit}")
+
+
+def validate_value(name: str, value: Any, unit: Any) -> None:
+    validate_unit(name, unit)
+    _, kind, choices, _ = FEATURES[name]
     if kind == "color":
         check(isinstance(value, str) and re.fullmatch(r"#[0-9a-f]{6}", value) is not None, "expected lowercase six-digit hex color")
     elif kind in {"enum", "text"}:
@@ -207,8 +212,7 @@ def validate_dna(dna: Any) -> dict:
                 number(feature["value"])
         else:
             check(feature["value"] is None, "unknown/not-applicable value must be null")
-            spec = FEATURES[feature["name"]]
-            validate_value(feature["name"], spec[2][0] if spec[2] else ("value" if spec[1] == "text" else "#000000" if spec[1] == "color" else 1 if spec[1] == "count" or feature["name"] in {"typography.font_weight", "typography.line_height_factor"} else 0), feature["unit"])
+            validate_unit(feature["name"], feature["unit"])
     for principle in principles.values():
         shape(principle, {"id", "statement", "evidence_ids", "confidence", "strength", "scope", "basis"})
         text(principle["statement"])

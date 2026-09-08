@@ -41,8 +41,7 @@ def validate_bounds(bounds: dict, *, full: bool = False) -> None:
 
 def validate_geometry(value: dict, *, extended: bool = False) -> None:
     shape(value, {'region', 'coordinate_space', 'bounds'}, {'visibility', 'full_bounds'} if extended else set())
-    check(isinstance(value['region'], str) and re.fullmatch(REGION_PATTERN, value['region']) is not None,
-          'geometry region must be a neutral lowercase identifier')
+    validate_region(value['region'])
     check(value['coordinate_space'] == 'viewport-ratio', 'geometry requires viewport-ratio coordinates')
     validate_bounds(value['bounds'])
     if 'visibility' in value:

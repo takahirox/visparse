@@ -1,0 +1,219 @@
+{
+  "schema_version": "0.3",
+  "sources": [
+    {
+      "id": "source",
+      "kind": "screenshot",
+      "locator": "memory://synthetic-visual-details",
+      "role": "reference"
+    }
+  ],
+  "measurements": [],
+  "observations": [
+    {
+      "id": "observation-1",
+      "source_ids": [
+        "source"
+      ],
+      "category": "layout",
+      "statement": "Synthetic fixture: a two-line light headline sits on a dark background; a photo contains a partly occluded table, and an overlay hides part of a content tile."
+    }
+  ],
+  "interpretations": [
+    {
+      "id": "appearance",
+      "observation_ids": [
+        "observation-1"
+      ],
+      "category": "typography",
+      "statement": "Synthetic regional color and typography estimates.",
+      "confidence_id": "confidence-1",
+      "appearance": {
+        "region": "headline",
+        "properties": {
+          "foreground": {
+            "value": "#ffffff",
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "background": {
+            "value": "#123456",
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "accent": {
+            "value": null,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "font_weight": {
+            "value": 700,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "width_style": {
+            "value": "condensed",
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "line_count": {
+            "value": 2,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "letter_spacing_em": {
+            "value": -0.02,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "line_height_factor": {
+            "value": 1.1,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          }
+        }
+      }
+    },
+    {
+      "id": "composition",
+      "observation_ids": [
+        "observation-1"
+      ],
+      "category": "imagery_media",
+      "statement": "Synthetic table placement within a media rectangle.",
+      "confidence_id": "confidence-1",
+      "media": {
+        "region": "hero-photo",
+        "coordinate_space": "media-ratio",
+        "coverage": {
+          "value": "partial",
+          "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+        },
+        "subjects": [
+          {
+            "region": "table",
+            "kind": {
+              "value": "table",
+              "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+            },
+            "bounds": {
+              "x": {
+                "value": 0.1,
+                "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+              },
+              "y": {
+                "value": 0.2,
+                "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+              },
+              "width": {
+                "value": 0.3,
+                "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+              },
+              "height": {
+                "value": 0.4,
+                "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+              }
+            },
+            "visibility": {
+              "value": "occluded",
+              "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+            },
+            "crop": {
+              "value": "none",
+              "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "visible-tile",
+      "observation_ids": [
+        "observation-1"
+      ],
+      "category": "layout",
+      "statement": "Synthetic partially occluded tile; full width is unsupported.",
+      "confidence_id": "confidence-1",
+      "geometry": {
+        "region": "content-tile",
+        "coordinate_space": "viewport-ratio",
+        "bounds": {
+          "x": {
+            "value": 0.27,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "y": {
+            "value": 0.77,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "width": {
+            "value": 0.2,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "height": {
+            "value": 0.23,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          }
+        },
+        "visibility": {
+          "value": "occluded",
+          "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+        },
+        "full_bounds": {
+          "x": {
+            "value": null,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "y": {
+            "value": 0.77,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "width": {
+            "value": null,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          },
+          "height": {
+            "value": null,
+            "uncertainty": "Approximate visual estimate; original CSS is unavailable."
+          }
+        }
+      }
+    }
+  ],
+  "confidence": [
+    {
+      "id": "confidence-1",
+      "level": 0.7,
+      "uncertainty": "Synthetic example values, not validated against an actual screenshot.",
+      "basis": "Manually authored contract demonstration; not a live analysis."
+    }
+  ],
+  "principles": [
+    {
+      "id": "principle-1",
+      "observation_ids": [
+        "observation-1"
+      ],
+      "interpretation_ids": [
+        "appearance"
+      ],
+      "statement": "Use one dominant alignment axis to reduce competition."
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "recommendation-1",
+      "principle_ids": [
+        "principle-1"
+      ],
+      "target_source_ids": [],
+      "action": "Align the target site's primary content to its own grid.",
+      "rationale": "This adapts the hierarchy principle without reproducing the source.",
+      "transfer_mode": "principle",
+      "avoid_copying": [
+        "assets",
+        "branding",
+        "content",
+        "implementation"
+      ]
+    }
+  ],
+  "provenance": {
+    "created_by": "synthetic-contract-example",
+    "inputs": [
+      "source"
+    ]
+  }
+}
