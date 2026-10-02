@@ -22,6 +22,16 @@ Do not approve a Pull Request as closing an Issue when important requirements re
 
 If the change is intentionally partial, the Pull Request should say so and the Issue should remain open.
 
+## Check Acceptance and Verification
+
+Follow the [development flow](development-flow.md#1-start-with-an-issue) when distinguishing pre-merge acceptance from required post-merge verification.
+
+Mandatory pre-merge acceptance criteria must be achievable and verifiable before merge. Require all implementation requirements and applicable pre-merge tests to be satisfied. Checks possible only after merge must not be prerequisites for pre-merge PR approval.
+
+For a merge-triggered deployment, review the code/configuration, local build results, and applicable automated test results before merge. Verification that deployment succeeds and the newly published site behaves as expected belongs [after merge](development-flow.md#6-verify-after-merge).
+
+Ensure required post-merge verification is recorded separately with its expected results and reported as pending until performed. Pending post-merge checks alone do not prevent approval when implementation and mandatory pre-merge acceptance are complete. They do not excuse missing implementation, skipped applicable pre-merge tests, or claims that unperformed validation passed.
+
 ## Check for Unnecessary Work
 
 Verify that the Pull Request does not go beyond what the Issue requires without a clear reason.
@@ -51,8 +61,9 @@ Also verify the ordinary quality of the change:
 
 A Pull Request is ready to merge when:
 
-- it fully addresses the Issue it claims to resolve
+- it satisfies all implementation requirements and mandatory pre-merge acceptance criteria of the Issue it claims to resolve
 - it does not introduce unjustified scope or complexity
 - the implementation is correct and appropriately validated
+- required post-merge verification is recorded separately and reported as pending until performed
 
 If any of these conditions are not met, request changes and review again after revision.
