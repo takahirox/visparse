@@ -144,6 +144,8 @@ checked-in benchmark predictions and annotations are synthetic regression fixtur
 
 ## Development
 
+See the [development flow](docs/development-flow.md) and [review guidelines](docs/review-guidelines.md) for AI-assisted collaboration.
+
 ```sh
 PYTHONPATH=src python -m unittest discover -s tests -v
 python -m compileall -q src tests examples
