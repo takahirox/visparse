@@ -33,7 +33,7 @@ The Pull Request should explain:
 - how the change was validated
 - which Issue it addresses
 
-Use validation appropriate to the change. Report results and limitations accurately; do not claim unperformed checks passed.
+Use validation appropriate to the change, following the [test and CI performance principles](#test-and-ci-performance-principles). Report results and limitations accurately; do not claim unperformed checks passed.
 
 Report pre-merge validation results separately from required post-merge verification, which remains pending until performed.
 
@@ -42,6 +42,19 @@ A Pull Request should only claim to close an Issue when it fully addresses that 
 If the Pull Request intentionally implements only part of the Issue, it should state that clearly and should not present the Issue as fully resolved.
 
 Required post-merge verification may remain pending at approval when all implementation requirements and mandatory pre-merge acceptance criteria are satisfied and the remaining checks are recorded separately. Do not describe pending verification as completed.
+
+### Test and CI performance principles
+
+**Detect the required failures at the lightest appropriate layer, without redundant execution.** Preserve required correctness, regression assertions, and meaningful integration coverage when moving or consolidating checks.
+
+The current [Tests workflow](../.github/workflows/tests.yml) runs `unittest` discovery, `compileall`, and stored-fixture CLI checks (`design-validate`, `eval-analysis`, `design-roundtrip`) on Python 3.10 and 3.14. A separate Python 3.14 job installs `.[collector]` and Chromium, then runs `test_collector.py` with `VISPARSE_BROWSER_TESTS=1`, including interaction collection and the cross-site fixture trial. See the [README commands](../README.md#development) and [browser validation instructions](design-workflow.md#validation-and-supported-scope). Core tests use stored predictions or mocked runners; live-model quality is a separate concern.
+
+1. **Prefer the lightest meaningful layer.** Test schema branches, calculations, normalization, Markdown rendering, CLI behavior, and broad data combinations offline. Use Chromium for actual DOM/CSS capture, browser events, and interaction boundaries that need it; use live models only for questions about real model behavior. Each test should catch a concrete defect rather than mirror its implementation.
+2. **Choose combinations deliberately.** Cover distinct processing paths with representative evidence kinds, viewports, states, export modes, and agent configurations. Exhaust combinations where interactions require them, rather than multiplying every case by every dimension. Retain required regressions and integration assurance when redistributing coverage.
+3. **Match validation to the change.** Documentation-only changes need Markdown, link/anchor, consistency, and `git diff --check` checks. UI/capture changes need relevant offline contracts and browser checks for affected browser behavior; core/runtime changes need focused feedback followed by full applicable core regression checks. CI/build changes need workflow/configuration review and affected install, build, and test checks. Current CI runs on pull requests and pushes to `main`, including documentation changes; this guidance does not change those triggers. Keep applicable checks mandatory before merge. Live-model or additional manual validation is optional unless the Issue justifies requiring it. Record genuinely post-merge-only deployment/publication verification separately; no deployment workflow is currently configured here.
+4. **Reuse work and avoid duplicate execution.** In future test/CI changes, consider reusing installs, browser downloads, builds, and fixture preparation with keys covering relevant versions/inputs and isolation that prevents stale or shared mutable state. Avoid equivalent push/PR runs for the same revision. Cancel superseded runs when safe while preserving any required deployment ordering. Parallelize independent work based on measured elapsed time and resource use, rather than assuming more workers help.
+5. **Review value and cost together.** Identify the additional defect a new or expanded test detects, whether existing coverage already detects it, and its execution and maintenance cost. Scrutinize repeated browser/process setup, large evidence archives, repeated fixture trials, and Cartesian-product growth before adding them.
+6. **Maintain an execution-time budget.** No measured normal-CI duration baseline or target is recorded yet. Establish a repository-specific baseline and target during actual test/CI performance work, then monitor growth and investigate overruns. Track elapsed feedback time, total runner/computation time, and queue time separately. Revisit structure and duplication while retaining meaningful assertions and required coverage. This documentation introduces no benchmark or timing gate.
 
 ## 3. Review Before Merge
 
