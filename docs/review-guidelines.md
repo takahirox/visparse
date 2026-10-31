@@ -32,6 +32,10 @@ For a merge-triggered deployment, review the code/configuration, local build res
 
 Ensure required post-merge verification is recorded separately with its expected results and reported as pending until performed. Pending post-merge checks alone do not prevent approval when implementation and mandatory pre-merge acceptance are complete. They do not excuse missing implementation, skipped applicable pre-merge tests, or claims that unperformed validation passed.
 
+Apply the [test and CI performance principles](development-flow.md#test-and-ci-performance-principles). For added or expanded checks, review the additional defect coverage, duplication with existing checks, and execution and maintenance cost. Ask:
+
+> Does this change provide sufficient confidence with the lightest appropriate validation, without redundant execution?
+
 ## Check for Unnecessary Work
 
 Verify that the Pull Request does not go beyond what the Issue requires without a clear reason.
