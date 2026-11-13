@@ -24,8 +24,10 @@ For a merge-triggered deployment, validate the code/configuration, local builds,
 
 ## Required post-merge verification
 
-Record required checks possible only after merge separately, including the expected result. Report them as pending until performed; do not claim they passed in pre-merge validation. If none are required, state that. See [post-merge verification](https://github.com/takahirox/visparse/blob/main/docs/development-flow.md#6-verify-after-merge).
+Record only checks the actual change requires after merge, including the expected result. If none are required, state that. Report pending or environment-blocked checks honestly. Follow the [merge and closure lifecycle](https://github.com/takahirox/visparse/blob/main/docs/development-flow.md#5-merge): merge and close the completed original Issue, then record verification evidence and track discovered defects in linked Issues.
 
 ## Context
 
 Add any relevant context, examples, logs, or related issues.
+
+For a defect found after merge, first check for an equivalent Issue; include reproduction steps, the affected revision, expected/actual behavior, and links to the original Issue and Pull Request. Do not reopen the original Issue solely for this follow-up.
